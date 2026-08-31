@@ -161,12 +161,16 @@ defending this project, not a framework author.
 Before reporting, run `typecheck`, `lint`, `build` and `test`, and compare what
 you changed against the file list in the prompt.
 
-Then write a self-report containing, briefly:
+Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 
 1. what was done, per checklist item;
 2. where you departed from the prompt, and why;
 3. what you could not do, and what blocked it;
 4. anything you noticed that looks wrong but was out of scope.
 
-Do not report a slice as complete while a required command fails. Say what
-fails and why instead.
+Hand the work over there and stop. Whether the slice is accepted is decided in
+review, outside this repository — do not declare it closed, and do not start the
+next slice.
+
+Do not hand over a slice while a required command fails. Say what fails and why
+instead.
