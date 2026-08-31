@@ -1,0 +1,28 @@
+{
+  "name": "@lms/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Общий пакет контрактов LMS: схемы Zod, выводимые типы, перечисления и константы",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
