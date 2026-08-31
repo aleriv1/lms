@@ -1,0 +1,28 @@
+version: 1
+
+project:
+  slug: "lms-project"
+  title: "LMS Project"
+  profile: "code"
+
+vault:
+  project_path: "G:/My Drive/tuuli/dev/lms-project"
+  project_folder_id: ""
+
+capture:
+  language: "ru"
+  timezone: "Europe/Moscow"
+
+sources:
+  codex:
+    workspace_roots:
+      - "C:/Data/obmen/result-uni-all/course-project"
+  external: []
+
+tags:
+  registry: "Tags.md"
+  external_registries: []
+  max_semantic_per_entry: 4
+
+rules:
+  - "C:/Data/obmen/result-uni-all/course-project/.codex/course-project-notes.md"
