@@ -6,7 +6,7 @@ restate the specification; it states what must never drift.
 
 ## 1. Authority order
 
-1. `technical-specification.md` — the requirements. Russian, v1.1. Section
+1. `technical-specification.md` — the requirements. Russian, v1.2. Section
    numbers are cited throughout this file.
 2. `shared/` — the wire contract. Zod schemas, inferred types, enums, constants.
 3. `AGENTS.md` — this file.
@@ -62,7 +62,7 @@ Envelopes are fixed:
 
 ## 4. Repository and commands
 
-Three npm workspaces: `client/` (React 18, Vite), `server/` (Express,
+Three npm workspaces: `client/` (React 19, Vite), `server/` (Express 5,
 Mongoose), `shared/` (contracts). TypeScript `strict` in all three.
 
 Root scripts, created in the first slice and kept working afterwards:

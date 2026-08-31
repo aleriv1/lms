@@ -24,7 +24,7 @@
 
 - **Даёт:** `npm install`, `npm run dev`, `npm run build`, `typecheck`, `lint` проходят; клиент открывается, сервер отвечает на health-роут и подключается к MongoDB.
 - **Сервер:** bootstrap Express, подключение Mongoose, конфиг из переменных окружения, `.env.example`, централизованный обработчик ошибок в формате `apiErrorSchema`, журналирование запросов, middleware валидации по Zod-схеме (принимает схему, отдаёт `422` со списком полей), health-роут.
-- **Клиент:** Vite + React 18, роутер с пустыми страницами по разделу 6 ТЗ, store Redux Toolkit, единый API-клиент с централизованной обработкой `401`, файл дизайн-токенов, базовые компоненты `Button`, `Input`, `Select`, `Textarea`, `Checkbox`, `Modal`, `Loader`, `EmptyState`, `ErrorState`.
+- **Клиент:** Vite + React 19, роутер с пустыми страницами по разделу 6 ТЗ, store Redux Toolkit, единый API-клиент с централизованной обработкой `401`, файл дизайн-токенов, базовые компоненты `Button`, `Input`, `Select`, `Textarea`, `Checkbox`, `Modal`, `Loader`, `EmptyState`, `ErrorState`.
 - **Контракт:** `apiErrorSchema`, `API_ERROR_CODES`, `createListResponseSchema`.
 - **Риск-зоны:** формат ошибки от обработчика; отсутствие секретов в репозитории; `strict` во всех трёх workspace.
 - `Table` и `Pagination` появляются в срезе 03, где для них есть первый потребитель. Разбор не пишется: бизнес-логики нет.
