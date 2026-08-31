@@ -65,15 +65,16 @@ Envelopes are fixed:
 Three npm workspaces: `client/` (React 19, Vite), `server/` (Express 5,
 Mongoose), `shared/` (contracts). TypeScript `strict` in all three.
 
-Root scripts, created in the first slice and kept working afterwards:
+Root scripts. All but `seed` are created in the first slice; `seed` arrives in
+the slice that first has data to write. Once a script exists it keeps working:
 
 - `npm install` — install all workspaces
 - `npm run build` — shared, then server, then client
 - `npm run typecheck` — all three workspaces
 - `npm run lint` — all three workspaces
 - `npm run test` — automated tests
-- `npm run seed` — demo data
 - `npm run dev` — client and server in watch mode
+- `npm run seed` — demo data (from slice 02 on)
 
 A slice is not finished while any of `typecheck`, `lint`, `build` or `test`
 fails. Run them yourself before writing the self-report.
