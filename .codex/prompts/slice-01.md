@@ -352,7 +352,7 @@ browser with the 404 page on an unknown path.
 ## Hand over
 
 Write the self-report to `.codex/reports/slice-01.md` in the form of AGENTS.md
-section 8 and stop. Do not start slice 02.
+section 8, commit as section 8 describes, and stop. Do not start slice 02.
 
 State explicitly in the report:
 

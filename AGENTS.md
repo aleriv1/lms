@@ -169,6 +169,12 @@ Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 3. what you could not do, and what blocked it;
 4. anything you noticed that looks wrong but was out of scope.
 
+Then make exactly one commit containing the slice and its report, on the current
+branch. Subject line in English, imperative, up to ~50 characters, naming the
+slice — `Build the repository skeleton and design system`. Body explains why the
+work is shaped the way it is, not which files moved. Do not push, do not amend
+or rebase earlier commits, and do not commit while a required command fails.
+
 Hand the work over there and stop. Whether the slice is accepted is decided in
 review, outside this repository — do not declare it closed, and do not start the
 next slice.
