@@ -10,6 +10,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({
   variant = "primary",
   isLoading = false,
+  type = "button",
   disabled,
   children,
   className,
@@ -21,10 +22,11 @@ export function Button({
 
   return (
     <button
+      {...props}
       className={classes}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
-      {...props}
+      type={type}
     >
       {isLoading && <span className={styles.spinner} aria-hidden="true" />}
       {children}

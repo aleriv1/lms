@@ -1,5 +1,6 @@
 import eslint from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
+import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
@@ -10,22 +11,12 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      globals: {
-        AbortSignal: "readonly",
-        console: "readonly",
-        document: "readonly",
-        fetch: "readonly",
-        HTMLElement: "readonly",
-        HTMLButtonElement: "readonly",
-        KeyboardEvent: "readonly",
-        NodeJS: "readonly",
-        process: "readonly",
-        setTimeout: "readonly",
-        window: "readonly",
-      },
-    },
+    files: ["client/**/*.{ts,tsx}"],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ["server/**/*.ts", "shared/**/*.ts", "*.js"],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ["client/**/*.{ts,tsx}"],

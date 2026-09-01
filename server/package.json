@@ -18,11 +18,11 @@
     "mongoose": "^8.0.0"
   },
   "devDependencies": {
-    "@types/cookie-parser": "latest",
-    "@types/cors": "latest",
-    "@types/express": "latest",
+    "@types/cookie-parser": "^1.4.0",
+    "@types/cors": "^2.8.0",
+    "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
-    "@types/supertest": "latest",
+    "@types/supertest": "^7.2.0",
     "supertest": "^7.0.0",
     "tsx": "^4.0.0",
     "vitest": "^3.0.0"
