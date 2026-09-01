@@ -169,6 +169,13 @@ Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 3. what you could not do, and what blocked it;
 4. anything you noticed that looks wrong but was out of scope.
 
+Item 2 includes the case where the prompt contradicted itself and you picked a
+reading. Building something the prompt's own structure did not describe is a
+departure even when the prompt left you no consistent alternative, and it is the
+most valuable line in the report: it is how a prompt defect gets fixed instead of
+being copied into the next slice. "No departures" is a claim about the prompt,
+not only about your work.
+
 Stop every process you started — dev servers above all. A watcher survives the
 crash that made you leave it, keeps the port, and the next run fails with
 `EADDRINUSE` on someone else's machine, where it reads as a defect in working
