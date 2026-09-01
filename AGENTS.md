@@ -169,6 +169,11 @@ Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 3. what you could not do, and what blocked it;
 4. anything you noticed that looks wrong but was out of scope.
 
+Stop every process you started — dev servers above all. A watcher survives the
+crash that made you leave it, keeps the port, and the next run fails with
+`EADDRINUSE` on someone else's machine, where it reads as a defect in working
+code. Leaving a container running is fine; it is shared infrastructure.
+
 Then make exactly one commit containing the slice and its report, on the current
 branch. Subject line in English, imperative, up to ~50 characters, naming the
 slice — `Build the repository skeleton and design system`. Body explains why the
