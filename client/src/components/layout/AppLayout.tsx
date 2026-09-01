@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { logout } from "../../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { Button, Loader } from "../ui";
 import styles from "./AppLayout.module.css";
-import { getNavItems, ROLE_LABELS } from "./navItems";
+import { getNavItems, isNavItemActive, ROLE_LABELS } from "./navItems";
 
 export function AppLayout() {
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -32,10 +38,14 @@ export function AppLayout() {
           <p className={styles.role}>{ROLE_LABELS[user.role]}</p>
         </div>
         <nav className={styles.navigation} aria-label="Основная навигация">
-          {getNavItems(user.role).map((item) => (
+          {getNavItems(user).map((item) => (
             <NavLink
-              className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.active : ""}`
+              className={() =>
+                `${styles.navLink} ${
+                  isNavItemActive(item, location.pathname, location.search)
+                    ? styles.active
+                    : ""
+                }`
               }
               key={item.to}
               to={item.to}

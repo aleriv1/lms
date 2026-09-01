@@ -3,6 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorState, Loader } from "./components/ui";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { CourseCreatePage } from "./pages/CourseCreatePage";
+import { CourseEditPage } from "./pages/CourseEditPage";
+import { CourseListPage } from "./pages/CourseListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProfileEditPage } from "./pages/ProfileEditPage";
@@ -55,6 +58,17 @@ export function App() {
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
+            <Route element={<ProtectedRoute roles={["teacher", "admin"]} />}>
+              <Route path="/manage/courses" element={<CourseListPage />} />
+              <Route
+                path="/manage/courses/new"
+                element={<CourseCreatePage />}
+              />
+              <Route
+                path="/manage/courses/:courseId/edit"
+                element={<CourseEditPage />}
+              />
+            </Route>
             {isAuthenticated && <Route path="*" element={<NotFoundPage />} />}
           </Route>
         </Route>

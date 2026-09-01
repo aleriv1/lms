@@ -1,4 +1,4 @@
-import type { UserRole } from "@lms/shared";
+import type { PublicUser, UserRole } from "@lms/shared";
 
 export type NavItem = { to: string; label: string };
 
@@ -25,6 +25,38 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Администратор",
 };
 
-export function getNavItems(role: UserRole): NavItem[] {
-  return NAV_ITEMS[role];
+export function getNavItems(user: PublicUser): NavItem[] {
+  if (user.role === "teacher") {
+    return [
+      { to: "/manage/courses", label: "Каталог курсов" },
+      {
+        to: `/manage/courses?authorId=${user.id}`,
+        label: "Мои курсы",
+      },
+      { to: "/profile", label: "Личный кабинет" },
+    ];
+  }
+
+  return NAV_ITEMS[user.role];
+}
+
+/** «Каталог курсов» and «Мои курсы» share a path and differ only by query. */
+export function isNavItemActive(
+  item: NavItem,
+  pathname: string,
+  search: string,
+): boolean {
+  const [itemPath, itemSearch = ""] = item.to.split("?");
+  const pathMatches =
+    pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+
+  if (!pathMatches) {
+    return false;
+  }
+
+  const itemAuthorId = new URLSearchParams(itemSearch).get("authorId");
+  const locationAuthorId = new URLSearchParams(search).get("authorId");
+  return itemAuthorId
+    ? itemAuthorId === locationAuthorId
+    : locationAuthorId === null;
 }

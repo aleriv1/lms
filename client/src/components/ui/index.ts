@@ -5,5 +5,7 @@ export { ErrorState } from "./ErrorState/ErrorState";
 export { Input } from "./Input/Input";
 export { Loader } from "./Loader/Loader";
 export { Modal } from "./Modal/Modal";
+export { Pagination } from "./Pagination/Pagination";
 export { Select } from "./Select/Select";
+export { Table } from "./Table/Table";
 export { Textarea } from "./Textarea/Textarea";

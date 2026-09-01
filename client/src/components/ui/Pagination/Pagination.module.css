@@ -1,0 +1,26 @@
+.pagination,
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pagination {
+  justify-content: space-between;
+  margin-top: var(--space-4);
+}
+
+.select {
+  min-width: 6rem;
+}
+
+@media (max-width: 48rem) {
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .controls {
+    justify-content: space-between;
+  }
+}
