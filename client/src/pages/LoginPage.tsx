@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import type { Location } from "react-router-dom";
 
 import { Button, Input, Loader } from "../components/ui";
@@ -16,7 +16,6 @@ import styles from "./AuthForm.module.css";
 export function LoginPage() {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const navigate = useNavigate();
   const { status, user } = useAppSelector((state) => state.auth);
   const [serverError, setServerError] = useState<string | null>(null);
   const {
@@ -35,7 +34,8 @@ export function LoginPage() {
   }
 
   if (status === "authenticated" && user) {
-    return <Navigate to={getStartPath(user.role)} replace />;
+    const from = (location.state as { from?: Location } | null)?.from;
+    return <Navigate to={from ?? getStartPath(user.role)} replace />;
   }
 
   const onSubmit = handleSubmit(async (body) => {
@@ -43,10 +43,6 @@ export function LoginPage() {
     const result = await dispatch(login(body));
 
     if (login.fulfilled.match(result)) {
-      const state = location.state as { from?: Location } | null;
-      navigate(state?.from ?? getStartPath(result.payload.role), {
-        replace: true,
-      });
       return;
     }
 

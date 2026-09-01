@@ -4,7 +4,7 @@ import type { RegisterBody } from "@lms/shared";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 import { Button, Input, Loader } from "../components/ui";
 import { register } from "../features/auth/authSlice";
@@ -14,7 +14,6 @@ import styles from "./AuthForm.module.css";
 
 export function RegisterPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { status, user } = useAppSelector((state) => state.auth);
   const [serverError, setServerError] = useState<string | null>(null);
   const {
@@ -46,7 +45,6 @@ export function RegisterPage() {
     const result = await dispatch(register(body));
 
     if (register.fulfilled.match(result)) {
-      navigate(getStartPath(result.payload.role), { replace: true });
       return;
     }
 
