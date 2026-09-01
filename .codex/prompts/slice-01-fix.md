@@ -1,9 +1,9 @@
-# Slice 01 fix — environment file, pinned ranges, database compose
+# Slice 01 fix — environment, pinned ranges, database compose, lint globals
 
 Read `AGENTS.md` first. It outranks this prompt.
 
 This is not a new slice. Slice 01 was reviewed and is accepted except for the
-four items below. Change only what is listed here. Do not refactor anything you
+six items below. Change only what is listed here. Do not refactor anything you
 pass on the way, do not rename exports, do not touch `shared/`, and do not start
 slice 02.
 
@@ -274,7 +274,7 @@ AGENTS.md section 8, make exactly one commit, and stop.
 
 State explicitly in the report:
 
-1. whether the four pinned ranges resolved to the same versions as before;
+1. whether the five pinned ranges resolved to the same versions as before;
 2. whether `npm run db:up` worked and the health route actually returned
    `db: "connected"`;
 3. any global that `npm run lint` reported as undefined after item 6;
