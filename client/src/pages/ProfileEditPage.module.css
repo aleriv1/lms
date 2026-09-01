@@ -1,0 +1,42 @@
+.backLink {
+  display: inline-flex;
+  margin-bottom: var(--space-5);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.form h2 {
+  margin: var(--space-0);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.success {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 48rem) {
+  .forms {
+    grid-template-columns: 1fr;
+  }
+}

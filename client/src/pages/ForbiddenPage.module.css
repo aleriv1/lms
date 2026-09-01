@@ -1,0 +1,24 @@
+.page {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+}
+
+.code {
+  color: var(--color-danger);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.link {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}

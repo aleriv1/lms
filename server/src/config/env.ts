@@ -4,7 +4,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]),
   PORT: z.coerce.number().int().positive(),
   MONGODB_URI: z.string().min(1),
-  CLIENT_ORIGIN: z.string().url(),
+  CLIENT_ORIGIN: z.url(),
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
 });
 
 export type Env = {
@@ -12,6 +13,7 @@ export type Env = {
   port: number;
   mongodbUri: string;
   clientOrigin: string;
+  jwtSecret: string;
 };
 
 const result = envSchema.safeParse(process.env);
@@ -31,4 +33,5 @@ export const env: Env = {
   port: result.data.PORT,
   mongodbUri: result.data.MONGODB_URI,
   clientOrigin: result.data.CLIENT_ORIGIN,
+  jwtSecret: result.data.JWT_SECRET,
 };

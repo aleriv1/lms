@@ -9,6 +9,17 @@ export type RequestOptions = {
 };
 
 const baseUrl = import.meta.env.VITE_API_URL || "/api";
+const AUTHENTICATION_FAILURE_PATHS = new Set([
+  "/auth/login",
+  "/auth/register",
+  "/auth/me",
+]);
+
+let unauthorizedHandler: (() => void) | undefined;
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler;
+}
 
 /**
  * Sends a request to the API and returns the parsed JSON body.
@@ -32,11 +43,14 @@ export async function apiRequest<TResponse>(
   });
 
   if (!response.ok) {
+    if (response.status === 401 && !AUTHENTICATION_FAILURE_PATHS.has(path)) {
+      unauthorizedHandler?.();
+    }
+
     const payload: unknown = await response.json().catch(() => undefined);
     const parsedError = apiErrorSchema.safeParse(payload);
 
     if (parsedError.success) {
-      // Slice 02 adds central session-expiry handling at this boundary.
       throw new ApiError(
         response.status,
         parsedError.data.code,

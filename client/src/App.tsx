@@ -1,22 +1,75 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { AppLayout } from "./components/layout/AppLayout";
+import { ErrorState, Loader } from "./components/ui";
+import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { ProfileEditPage } from "./pages/ProfileEditPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { getStartPath } from "./routes/startPath";
+import { fetchSession } from "./features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
 
-function HomePage() {
+function RootRedirect() {
+  const dispatch = useAppDispatch();
+  const { status, user } = useAppSelector((state) => state.auth);
+
+  if (status === "idle" || status === "loading") {
+    return <Loader />;
+  }
+
+  if (status === "error") {
+    return <ErrorState onRetry={() => void dispatch(fetchSession())} />;
+  }
+
+  if (status === "authenticated" && user) {
+    return <Navigate to={getStartPath(user.role)} replace />;
+  }
+
+  return <Navigate to="/login" replace />;
+}
+
+function PublicNotFoundPage() {
   return (
     <main>
-      <h1>Corporate Learning</h1>
-      <p>Платформа корпоративного обучения готова к работе.</p>
+      <NotFoundPage />
     </main>
   );
 }
 
 export function App() {
+  const status = useAppSelector((state) => state.auth.status);
+  const isAuthenticated = status === "authenticated";
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/edit" element={<ProfileEditPage />} />
+            {isAuthenticated && <Route path="*" element={<NotFoundPage />} />}
+          </Route>
+        </Route>
+        {!isAuthenticated && (
+          <Route
+            path="*"
+            element={
+              status === "idle" || status === "loading" ? (
+                <Loader />
+              ) : (
+                <PublicNotFoundPage />
+              )
+            }
+          />
+        )}
       </Routes>
     </BrowserRouter>
   );

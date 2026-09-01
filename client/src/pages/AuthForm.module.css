@@ -1,0 +1,37 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.card {
+  width: min(100%, 28rem);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.heading {
+  text-align: center;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.footer {
+  text-align: center;
+}
+
+.link {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
