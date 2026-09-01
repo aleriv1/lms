@@ -1,0 +1,19 @@
+.state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.title {
+  margin: var(--space-0);
+  font-size: var(--font-size-title);
+}
+
+.action {
+  margin-top: var(--space-2);
+}

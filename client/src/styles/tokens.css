@@ -1,0 +1,39 @@
+:root {
+  --color-primary: #2457d6;
+  --color-primary-hover: #1d46ad;
+  --color-danger: #c22e35;
+  --color-danger-hover: #9f252b;
+  --color-text: #172033;
+  --color-text-muted: #5b6475;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f4f6fa;
+  --color-border: #cbd1dc;
+  --color-focus: #2457d6;
+  --color-overlay: rgb(23 32 51 / 60%);
+  --color-transparent: transparent;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-small: 0.25rem;
+  --radius-medium: 0.5rem;
+  --radius-round: 9999px;
+
+  --font-size-small: 0.875rem;
+  --font-size-body: 1rem;
+  --font-size-title: 1.75rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+
+  --shadow-modal: 0 1rem 3rem rgb(23 32 51 / 20%);
+  --control-height: 2.75rem;
+  --loader-size: 1.25rem;
+  --modal-width: 36rem;
+}

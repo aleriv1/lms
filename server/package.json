@@ -1,0 +1,30 @@
+{
+  "name": "@lms/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@lms/shared": "*",
+    "cookie-parser": "^1.0.0",
+    "cors": "^2.0.0",
+    "dotenv": "^17.0.0",
+    "express": "^5.0.0",
+    "mongoose": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "latest",
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "latest",
+    "supertest": "^7.0.0",
+    "tsx": "^4.0.0",
+    "vitest": "^3.0.0"
+  }
+}

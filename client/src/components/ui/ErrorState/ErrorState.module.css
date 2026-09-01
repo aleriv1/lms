@@ -1,0 +1,15 @@
+.state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-danger);
+  border-radius: var(--radius-medium);
+}
+
+.title {
+  margin: var(--space-0);
+  color: var(--color-danger);
+  font-size: var(--font-size-title);
+}
