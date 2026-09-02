@@ -159,8 +159,8 @@ defending this project, not a framework author.
 
 ## 8. Finishing a slice
 
-Before reporting, run `typecheck`, `lint`, `build` and `test`, and compare what
-you changed against the file list in the prompt.
+Before reporting, run the gate of section 9 and compare what you changed against
+the file list in the prompt.
 
 Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 
@@ -193,3 +193,37 @@ next slice.
 
 Do not hand over a slice while a required command fails. Say what fails and why
 instead.
+
+## 9. Verification is not free
+
+Every observation you make is paid for twice: once when it is taken, and again
+on every later turn, because it stays in the conversation for the rest of the
+session. A page dump or a screenshot is the most expensive thing you can look
+at. This project's budget is measured in five-hour windows, and a slice that
+does not fit inside one has failed regardless of the code in it.
+
+So verification is split by who is cheaper at it, not by who is capable of it.
+
+**Yours — the machine gate, once, at the end.** `npm run typecheck`, `npm run
+lint`, `npm run test`, `npm run build`. One line of result each in the report.
+Do not run `npm install` unless you changed `package.json`. Do not run `npm run
+seed` unless the prompt asks for it. Do not start `npm run dev`. Do not open a
+browser for any reason — not to check a screen, not to confirm a route, not to
+watch a state. There is no exception for looking just once to be sure.
+
+**The developer's — everything that needs the application running.** They have
+it open already and pay nothing to click. Your work is to make their pass short
+and exact: end the self-report with a numbered checklist under `## Проверить
+руками`, each item naming the URL, the input, and the result that would mean
+success. Write it for someone who has not read your code. A defect they find
+comes back as a fix prompt; a checklist they cannot follow is a defect in your
+report.
+
+**Nobody's — fixtures made by hand.** Do not create courses, lessons, users or
+any other test data through the UI or the API, and do not write cleanup scripts
+for data you should not have made. What the checklist needs comes from `npm run
+seed` or already exists.
+
+Pure logic still gets unit tests: they are cheap to run and they catch what a
+person cannot see by looking — permission rules, server-side calculations,
+ordering, sanitisation, contract conformance. Rendering is not unit-tested here.
