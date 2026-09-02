@@ -34,8 +34,10 @@ export type LearningCourseCard = z.infer<typeof learningCourseCardSchema>;
 
 /**
  * GET /learning/me. Все показатели считает сервер: суммарное время — сумма
- * длительностей завершённых уроков, общий прогресс — среднее по активным
- * назначениям (ТЗ, 7.4).
+ * длительностей завершённых уроков, общий прогресс — среднее по назначениям,
+ * которые не отозваны, то есть по тем же карточкам `courses` (ТЗ, 7.4).
+ * `assignedCoursesCount` — число курсов, а не строк назначений: курс,
+ * назначенный повторно после завершения, показывается один раз.
  */
 export const learningOverviewSchema = z.object({
   assignedCoursesCount: z.number().int().min(0),
@@ -69,8 +71,8 @@ export type LearningTestRef = z.infer<typeof learningTestRefSchema>;
 
 /**
  * GET /learning/courses/:courseId. Отдаётся только назначенный курс;
- * при отсутствии активного назначения сервер отвечает `course_not_assigned`
- * (ТЗ, 7.5).
+ * назначение `active` или `completed` даёт доступ, отозванное — нет, и тогда
+ * сервер отвечает `course_not_assigned` (ТЗ, 7.4, 7.5).
  */
 export const learningCourseSchema = z.object({
   id: objectIdSchema,

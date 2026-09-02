@@ -139,7 +139,26 @@ learningRouter.get("/me", async (request, response) => {
       LEARNING_CARD_COURSE_FIELDS,
     );
 
-  const courseIds = assignments.map((assignment) => assignment.courseId._id);
+  // Specification 7.4 counts courses, not rows. A course finished and then
+  // assigned again leaves two assignments in force (8.5 forbids only a second
+  // active one), and listing both would show one course twice, count it twice
+  // and give it double weight in the average below. The list is sorted newest
+  // first, so the first row of a course is the one that governs it.
+  const seenCourseIds = new Set<string>();
+  const currentAssignments = assignments.filter((assignment) => {
+    const courseId = assignment.courseId._id.toString();
+
+    if (seenCourseIds.has(courseId)) {
+      return false;
+    }
+
+    seenCourseIds.add(courseId);
+    return true;
+  });
+
+  const courseIds = currentAssignments.map(
+    (assignment) => assignment.courseId._id,
+  );
 
   const [counts, lastActivity, totalLearningMinutes] = await Promise.all([
     computeCourseProgress(userId, courseIds),
@@ -147,7 +166,7 @@ learningRouter.get("/me", async (request, response) => {
     sumCompletedLessonMinutes(userId),
   ]);
 
-  const courses: LearningCourseCard[] = assignments.map((assignment) => {
+  const courses: LearningCourseCard[] = currentAssignments.map((assignment) => {
     const course = assignment.courseId;
     const courseId = course._id.toString();
     const count = counts.get(courseId) ?? { completed: 0, total: 0 };

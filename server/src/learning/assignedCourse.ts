@@ -37,11 +37,18 @@ async function loadAssignedCourse(
   courseId: string | Types.ObjectId,
   userId: string,
 ): Promise<AssignedCourse> {
+  // A pair may hold more than one assignment in force: specification 8.5
+  // forbids a second *active* one, not an active one beside a course finished
+  // earlier, and 4.3 expressly allows assigning a course that was already
+  // taken. The newest row is the one that governs — without the sort Mongo
+  // returns whichever was inserted first, so the handler that closes an
+  // assignment would keep re-closing the old finished row and leave the live
+  // one active for good.
   const assignment = await CourseAssignment.findOne({
     userId,
     courseId,
     status: { $in: ["active", "completed"] },
-  });
+  }).sort({ assignedAt: -1, _id: -1 });
 
   if (!assignment || !isAssignmentEffective(assignment.status)) {
     throw courseNotAssignedError();
