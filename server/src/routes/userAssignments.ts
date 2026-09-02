@@ -5,6 +5,7 @@ import {
   type CreateAssignmentBody,
 } from "@lms/shared";
 import { Router } from "express";
+import type { Types } from "mongoose";
 import { z } from "zod";
 
 import {
@@ -18,6 +19,8 @@ import {
 } from "../admin/assignmentRules.js";
 import { isDuplicateKeyError } from "../db/duplicateKey.js";
 import { AppError } from "../errors/AppError.js";
+import { computeCourseProgress } from "../learning/courseProgress.js";
+import { computeProgressPercent } from "../learning/lessonStates.js";
 import { getAuthenticatedUser } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
 import { Course } from "../models/Course.js";
@@ -57,6 +60,23 @@ async function populateAssignment(
     { path: "courseId", select: ASSIGNMENT_COURSE_FIELDS },
     { path: "assignedBy", select: ASSIGNMENT_ASSIGNER_FIELDS },
   ]);
+}
+
+/**
+ * The share of completed required lessons for the pair the assignment names
+ * (specification 4.3). It is keyed by `userId + courseId`, so a course assigned
+ * again comes back with the progress the learner already had — that is the
+ * restoration 4.3 asks for, not a defect.
+ */
+async function assignmentProgressPercent(
+  userId: Types.ObjectId,
+  courseId: Types.ObjectId,
+): Promise<number> {
+  const progress = await computeCourseProgress(userId, [courseId]);
+
+  return computeProgressPercent(
+    progress.get(courseId.toString()) ?? { completed: 0, total: 0 },
+  );
 }
 
 /**
@@ -114,7 +134,10 @@ userAssignmentsRouter.post(
         .status(201)
         .json(
           assignmentSchema.parse(
-            toAssignment(await populateAssignment(assignment)),
+            toAssignment(
+              await populateAssignment(assignment),
+              await assignmentProgressPercent(user._id, course._id),
+            ),
           ),
         );
     } catch (error) {
@@ -160,8 +183,17 @@ userAssignmentsRouter.delete(
     assignment.revokedAt = new Date();
     await assignment.save();
 
+    // Read before populating: `populate` replaces `courseId` on the document
+    // itself, and the identifier is needed as an identifier.
+    const progressPercent = await assignmentProgressPercent(
+      assignment.userId,
+      assignment.courseId,
+    );
+
     response.json(
-      assignmentSchema.parse(toAssignment(await populateAssignment(assignment))),
+      assignmentSchema.parse(
+        toAssignment(await populateAssignment(assignment), progressPercent),
+      ),
     );
   },
 );

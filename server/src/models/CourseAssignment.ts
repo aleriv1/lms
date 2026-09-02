@@ -89,14 +89,15 @@ export const CourseAssignment = model<CourseAssignmentAttributes>(
 );
 
 /**
- * `progressPercent` is `0` for every assignment in this slice, and that is the
- * true value rather than a placeholder: `LessonProgress` arrives in slice 07,
- * so no lesson has been completed by anyone yet. Slice 07 replaces the constant
- * with the computation of specification 4.3.
+ * `progressPercent` has no default on purpose — the same reason `toLesson` has
+ * none for its `testId`. It is the share of completed required lessons of the
+ * course (specification 4.3), computed from `LessonProgress`, and an assignment
+ * silently reported at zero would be a lie; this way the compiler names every
+ * caller that has to look it up.
  */
 export function toAssignment(
   assignment: PopulatedCourseAssignment,
-  progressPercent = 0,
+  progressPercent: number,
 ): Assignment {
   return {
     id: assignment._id.toString(),

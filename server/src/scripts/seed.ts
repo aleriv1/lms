@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { hashPassword } from "../auth/password.js";
 import { connectToDatabase } from "../db/connect.js";
 import { Course } from "../models/Course.js";
+import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson } from "../models/Lesson.js";
 import { Test } from "../models/Test.js";
 import { User } from "../models/User.js";
@@ -136,7 +137,11 @@ try {
       continue;
     }
 
-    await Lesson.create({ ...demoLesson, courseId: course._id, videoUrl: null });
+    await Lesson.create({
+      ...demoLesson,
+      courseId: course._id,
+      videoUrl: null,
+    });
     console.info(`${demoLesson.title}: created`);
   }
 
@@ -226,25 +231,206 @@ try {
     console.info(`${PUBLISHED_COURSE_TITLE}: created`);
   }
 
-  const PUBLISHED_LESSON_TITLE = "Допуск к работам на оборудовании";
-  const existingPublishedLesson = await Lesson.exists({
-    courseId: publishedCourse._id,
-    order: 1,
-  });
-  if (existingPublishedLesson) {
-    console.info(`${PUBLISHED_LESSON_TITLE}: already present`);
-  } else {
-    await Lesson.create({
-      courseId: publishedCourse._id,
-      title: PUBLISHED_LESSON_TITLE,
+  // The learning rules of specification 4.2 are invisible on a course of one
+  // lesson: they need a sequence to walk, an optional lesson beside the
+  // frontier, a draft the learner must not see, and a lesson closed by a test.
+  // The test hangs on the *optional* lesson on purpose — the refusal
+  // `lesson_test_required` can then be seen while the course itself stays
+  // finishable before test attempts exist (slice 08).
+  const PUBLISHED_COURSE_LESSONS = [
+    {
+      title: "Допуск к работам на оборудовании",
       order: 1,
       content: "<p>Кто и на каком основании допускается к работам.</p>",
       durationMinutes: 25,
       isRequired: true,
+      status: "published" as const,
+    },
+    {
+      title: "Журнал осмотров: как заполнять",
+      order: 2,
+      content: "<p>Порядок записи результатов осмотра оборудования.</p>",
+      durationMinutes: 10,
+      isRequired: false,
+      status: "published" as const,
+    },
+    {
+      title: "Периодичность осмотров",
+      order: 3,
+      content: "<p>Сроки и объем периодических осмотров.</p>",
+      durationMinutes: 20,
+      isRequired: true,
+      status: "published" as const,
+    },
+    {
+      title: "Внеплановые работы",
+      order: 4,
+      content: "<p>Порядок допуска при внеплановых работах.</p>",
+      durationMinutes: 15,
+      isRequired: true,
+      status: "draft" as const,
+    },
+  ];
+
+  for (const demoLesson of PUBLISHED_COURSE_LESSONS) {
+    const existingLesson = await Lesson.exists({
+      courseId: publishedCourse._id,
+      order: demoLesson.order,
+    });
+    if (existingLesson) {
+      console.info(`${demoLesson.title}: already present`);
+      continue;
+    }
+
+    await Lesson.create({
+      ...demoLesson,
+      courseId: publishedCourse._id,
+      videoUrl: null,
+    });
+    console.info(`${demoLesson.title}: created`);
+  }
+
+  const OPTIONAL_LESSON_TEST_TITLE = "Проверка: заполнение журнала осмотров";
+  const optionalLesson = await Lesson.findOne({
+    courseId: publishedCourse._id,
+    order: 2,
+  });
+  if (!optionalLesson) {
+    throw new Error(
+      "the optional demo lesson is missing after seeding lessons",
+    );
+  }
+
+  const existingLessonTest = await Test.exists({
+    lessonId: optionalLesson._id,
+  });
+  if (existingLessonTest) {
+    console.info(`${OPTIONAL_LESSON_TEST_TITLE}: already present`);
+  } else {
+    await Test.create({
+      courseId: publishedCourse._id,
+      lessonId: optionalLesson._id,
+      title: OPTIONAL_LESSON_TEST_TITLE,
+      passingScore: 70,
+      version: 1,
+      questions: [
+        {
+          text: "Когда заполняется журнал осмотров?",
+          type: "single",
+          order: 1,
+          options: [
+            { text: "Сразу после осмотра", isCorrect: true },
+            { text: "В конце месяца", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    console.info(`${OPTIONAL_LESSON_TEST_TITLE}: created`);
+  }
+
+  // A second published course, named by specification 12, gives the learning
+  // overview more than one card to average and gives the course page a final
+  // test to show. That course cannot be finished until attempts exist.
+  const DISPATCH_COURSE_TITLE = "Работа с диспетчерской системой";
+  let dispatchCourse = await Course.findOne({
+    title: DISPATCH_COURSE_TITLE,
+    authorId: secondTeacher._id,
+  });
+
+  if (dispatchCourse) {
+    console.info(`${DISPATCH_COURSE_TITLE}: already present`);
+  } else {
+    dispatchCourse = await Course.create({
+      title: DISPATCH_COURSE_TITLE,
+      category: "Эксплуатация",
+      audience: "dispatchers",
+      shortDescription:
+        "Прием смены, ведение оперативного журнала и порядок связи.",
+      description:
+        "Основные операции диспетчера: прием и сдача смены, оперативный журнал, связь со службами.",
+      authorId: secondTeacher._id,
+      status: "published",
+      publishedAt: new Date(),
+    });
+    console.info(`${DISPATCH_COURSE_TITLE}: created`);
+  }
+
+  const DISPATCH_LESSON_TITLE = "Прием и сдача смены";
+  const existingDispatchLesson = await Lesson.exists({
+    courseId: dispatchCourse._id,
+    order: 1,
+  });
+  if (existingDispatchLesson) {
+    console.info(`${DISPATCH_LESSON_TITLE}: already present`);
+  } else {
+    await Lesson.create({
+      courseId: dispatchCourse._id,
+      title: DISPATCH_LESSON_TITLE,
+      order: 1,
+      content: "<p>Порядок приема смены и обязательные записи в журнале.</p>",
+      durationMinutes: 30,
+      isRequired: true,
       status: "published",
       videoUrl: null,
     });
-    console.info(`${PUBLISHED_LESSON_TITLE}: created`);
+    console.info(`${DISPATCH_LESSON_TITLE}: created`);
+  }
+
+  const DISPATCH_FINAL_TEST_TITLE = "Итоговый тест по диспетчерской системе";
+  const existingFinalTest = await Test.exists({
+    courseId: dispatchCourse._id,
+    lessonId: null,
+  });
+  if (existingFinalTest) {
+    console.info(`${DISPATCH_FINAL_TEST_TITLE}: already present`);
+  } else {
+    await Test.create({
+      courseId: dispatchCourse._id,
+      lessonId: null,
+      title: DISPATCH_FINAL_TEST_TITLE,
+      passingScore: 70,
+      version: 1,
+      questions: [
+        {
+          text: "Что делается при приеме смены в первую очередь?",
+          type: "single",
+          order: 1,
+          options: [
+            { text: "Осмотр оборудования и запись в журнал", isCorrect: true },
+            { text: "Отчет руководителю в конце дня", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    console.info(`${DISPATCH_FINAL_TEST_TITLE}: created`);
+  }
+
+  // Without an assignment the learning section is empty, and making one by hand
+  // through the API is exactly what AGENTS.md (9) forbids.
+  const admin = await User.findOne({ email: "admin@lms.local" });
+  const student = await User.findOne({ email: "student@lms.local" });
+  if (!admin || !student) {
+    throw new Error("the demo administrator or student is missing");
+  }
+
+  for (const assignedCourse of [publishedCourse, dispatchCourse]) {
+    const existingAssignment = await CourseAssignment.exists({
+      userId: student._id,
+      courseId: assignedCourse._id,
+    });
+    if (existingAssignment) {
+      console.info(`${assignedCourse.title}: already assigned to the student`);
+      continue;
+    }
+
+    await CourseAssignment.create({
+      userId: student._id,
+      courseId: assignedCourse._id,
+      assignedBy: admin._id,
+      status: "active",
+      assignedAt: new Date(),
+    });
+    console.info(`${assignedCourse.title}: assigned to the student`);
   }
 } catch (error) {
   console.error("Failed to seed demo data", error);

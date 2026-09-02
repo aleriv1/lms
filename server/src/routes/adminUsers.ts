@@ -17,6 +17,8 @@ import { userAssignmentsRouter } from "./userAssignments.js";
 import { collectSelfModificationIssues } from "../admin/selfModification.js";
 import { buildUserFilter, buildUserSort } from "../admin/userQuery.js";
 import { AppError } from "../errors/AppError.js";
+import { computeCourseProgress } from "../learning/courseProgress.js";
+import { computeProgressPercent } from "../learning/lessonStates.js";
 import {
   getAuthenticatedUser,
   requireAuth,
@@ -75,9 +77,25 @@ async function buildAdminUserDetail(
       ASSIGNMENT_ASSIGNER_FIELDS,
     );
 
+  // One pass over the courses of this card, not a query per assignment.
+  const progress = await computeCourseProgress(
+    user._id,
+    assignments.map((assignment) => assignment.courseId._id),
+  );
+
   return adminUserDetailSchema.parse({
     ...toPublicUser(user),
-    assignments: assignments.map((assignment) => toAssignment(assignment)),
+    assignments: assignments.map((assignment) =>
+      toAssignment(
+        assignment,
+        computeProgressPercent(
+          progress.get(assignment.courseId._id.toString()) ?? {
+            completed: 0,
+            total: 0,
+          },
+        ),
+      ),
+    ),
   });
 }
 
