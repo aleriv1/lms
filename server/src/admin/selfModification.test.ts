@@ -86,6 +86,18 @@ describe("collectSelfModificationIssues", () => {
     ).toEqual(["status"]);
   });
 
+  it("recognises the same account through an upper case identifier", () => {
+    expect(
+      fields(
+        collectSelfModificationIssues(
+          admin,
+          ADMIN_ID.toUpperCase(),
+          body({ role: "student", status: "blocked" }),
+        ),
+      ),
+    ).toEqual(["role", "status"]);
+  });
+
   it("reports both fields when both are wrong", () => {
     expect(
       fields(

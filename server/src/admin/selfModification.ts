@@ -1,5 +1,9 @@
 import type { AdminUpdateUserBody, FieldError, PublicUser } from "@lms/shared";
 
+function isSameUser(actorId: string, targetUserId: string): boolean {
+  return actorId.toLowerCase() === targetUserId.toLowerCase();
+}
+
 /**
  * Specification 4.1: an administrator may not block or demote their own active
  * account through the ordinary editing form. Archiving oneself is refused on
@@ -15,7 +19,11 @@ export function collectSelfModificationIssues(
   targetUserId: string,
   body: AdminUpdateUserBody,
 ): FieldError[] {
-  if (actor.id !== targetUserId) {
+  // The identifier comes from the path, and `objectIdSchema` accepts hex in
+  // either case while MongoDB casts both to the same `ObjectId`. A plain string
+  // comparison therefore let an administrator dodge this whole rule by asking
+  // for their own account in upper case.
+  if (!isSameUser(actor.id, targetUserId)) {
     return [];
   }
 
