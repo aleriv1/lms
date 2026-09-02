@@ -1,6 +1,7 @@
 import {
   courseListItemSchema,
   lessonSummarySchema,
+  testSummarySchema,
   type Course,
   type CourseDetail,
   type CourseListItem,
@@ -21,6 +22,7 @@ import {
   unpublishLesson,
   updateLesson,
 } from "../lessons/lessonsSlice";
+import { createTest, deleteTest, updateTest } from "../tests/testsSlice";
 import {
   requestCourse,
   requestCourseArchive,
@@ -153,6 +155,26 @@ function replaceListCourse(items: CourseListItem[], course: Course): void {
   }
 }
 
+/**
+ * The lesson a test hangs on is stored on both sides: `tests[].lessonId` and
+ * `lessons[].testId`. A test that moves frees its previous lesson, so the whole
+ * list is walked instead of the target lesson alone. `lessonId: null` detaches
+ * the test — that is how a final test and a deleted test look here.
+ */
+function relinkLessonTest(
+  course: CourseDetail,
+  testId: string,
+  lessonId: string | null,
+): void {
+  course.lessons = course.lessons.map((lesson) => {
+    if (lesson.id === lessonId) {
+      return lesson.testId === testId ? lesson : { ...lesson, testId };
+    }
+
+    return lesson.testId === testId ? { ...lesson, testId: null } : lesson;
+  });
+}
+
 const coursesSlice = createSlice({
   name: "courses",
   initialState,
@@ -279,6 +301,39 @@ const coursesSlice = createSlice({
         if (state.detail.course?.id === courseId) {
           state.detail.course = action.payload;
         }
+      })
+      .addCase(createTest.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        const summary = testSummarySchema.parse(action.payload);
+        state.detail.course.tests = [...state.detail.course.tests, summary];
+        relinkLessonTest(state.detail.course, summary.id, summary.lessonId);
+      })
+      .addCase(updateTest.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        const summary = testSummarySchema.parse(action.payload);
+        state.detail.course.tests = state.detail.course.tests.map((test) =>
+          test.id === summary.id ? summary : test,
+        );
+        relinkLessonTest(state.detail.course, summary.id, summary.lessonId);
+      })
+      .addCase(deleteTest.fulfilled, (state, action) => {
+        const { courseId, testId } = action.payload;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        state.detail.course.tests = state.detail.course.tests.filter(
+          (test) => test.id !== testId,
+        );
+        relinkLessonTest(state.detail.course, testId, null);
       });
   },
 });

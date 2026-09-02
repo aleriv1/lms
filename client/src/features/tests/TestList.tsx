@@ -6,7 +6,6 @@ import type { FormError } from "../../api/formError";
 import { Button, EmptyState, Modal, Table } from "../../components/ui";
 import type { TableColumn } from "../../components/ui/Table/Table";
 import { useAppDispatch } from "../../store/hooks";
-import { fetchCourse } from "../courses/coursesSlice";
 import { deleteTest } from "./testsSlice";
 import styles from "./TestList.module.css";
 
@@ -58,8 +57,6 @@ export function TestList({ course }: TestListProps) {
     }
 
     setTestToDelete(null);
-    // The course response also refreshes the test links in the lesson list.
-    await dispatch(fetchCourse(course.id));
     setIsActionLoading(false);
   };
 

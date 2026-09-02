@@ -128,7 +128,6 @@ export function TestEditPage() {
     );
     if (updateTest.fulfilled.match(result)) {
       setSuccessMessage("Изменения сохранены");
-      await dispatch(fetchCourse(test.courseId));
       return null;
     }
     return result.payload ?? fallbackError;
