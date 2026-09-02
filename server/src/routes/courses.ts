@@ -15,6 +15,7 @@ import { Router, type RequestHandler } from "express";
 import { Types } from "mongoose";
 import { z } from "zod";
 
+import { courseLessonsRouter } from "./courseLessons.js";
 import { loadOwnedCourse } from "../courses/courseAccess.js";
 import { buildCourseFilter, buildCourseSort } from "../courses/courseQuery.js";
 import { collectPublicationIssues } from "../courses/publishRules.js";
@@ -31,6 +32,7 @@ import {
   toCourse,
   toCourseListItem,
 } from "../models/Course.js";
+import { Lesson, toLessonSummary } from "../models/Lesson.js";
 
 export const coursesRouter = Router();
 
@@ -45,7 +47,32 @@ const captureCourseUpdateFields: RequestHandler = (request, response, next) => {
   next();
 };
 
+/**
+ * Lessons are counted with every status: in the managing catalogue the author
+ * needs the size of the course, not its published part.
+ */
+function countCourseLessons(courseId: Types.ObjectId): Promise<number> {
+  return Lesson.countDocuments({ courseId }).exec();
+}
+
+/** One aggregation over the courses of the current page, not the collection. */
+async function countLessonsPerCourse(
+  courseIds: Types.ObjectId[],
+): Promise<Map<string, number>> {
+  const counts = await Lesson.aggregate<{ _id: Types.ObjectId; count: number }>(
+    [
+      { $match: { courseId: { $in: courseIds } } },
+      { $group: { _id: "$courseId", count: { $sum: 1 } } },
+    ],
+  );
+
+  return new Map(counts.map((entry) => [entry._id.toString(), entry.count]));
+}
+
 coursesRouter.use(requireAuth, requireRole("teacher", "admin"));
+
+// Mounted after the role check so the lesson routes inherit it.
+coursesRouter.use("/:courseId/lessons", courseLessonsRouter);
 
 coursesRouter.get(
   "/",
@@ -64,10 +91,15 @@ coursesRouter.get(
         }>("authorId", COURSE_AUTHOR_FIELDS),
       Course.countDocuments(filter),
     ]);
+    const lessonsCounts = await countLessonsPerCourse(
+      courses.map((course) => course._id),
+    );
 
     response.json(
       createListResponseSchema(courseListItemSchema).parse({
-        items: courses.map((course) => toCourseListItem(course, 0)),
+        items: courses.map((course) =>
+          toCourseListItem(course, lessonsCounts.get(course._id.toString()) ?? 0),
+        ),
         meta: {
           page: query.page,
           pageSize: query.pageSize,
@@ -108,11 +140,15 @@ coursesRouter.get(
       courseId,
       getAuthenticatedUser(request),
     );
+    const lessons = await Lesson.find({ courseId: course._id }).sort({
+      order: 1,
+    });
 
     response.json(
       courseDetailSchema.parse({
-        ...toCourse(course, 0),
-        lessons: [],
+        ...toCourse(course, lessons.length),
+        lessons: lessons.map((lesson) => toLessonSummary(lesson)),
+        // Tests arrive in slice 05.
         tests: [],
       }),
     );
@@ -158,7 +194,9 @@ coursesRouter.patch(
     }
     await course.save();
 
-    response.json(courseSchema.parse(toCourse(course, 0)));
+    response.json(
+      courseSchema.parse(toCourse(course, await countCourseLessons(course._id))),
+    );
   },
 );
 
@@ -199,7 +237,16 @@ coursesRouter.post(
       throw new AppError(409, "conflict", "Курс уже опубликован");
     }
 
-    const issues = collectPublicationIssues(course);
+    // Specification 4.2: a course needs at least one published required lesson.
+    const publishedRequiredLessonsCount = await Lesson.countDocuments({
+      courseId: course._id,
+      status: "published",
+      isRequired: true,
+    });
+    const issues = collectPublicationIssues(
+      course,
+      publishedRequiredLessonsCount,
+    );
     if (issues.length > 0) {
       throw new AppError(
         422,
@@ -213,7 +260,9 @@ coursesRouter.post(
     course.publishedAt ??= new Date();
     await course.save();
 
-    response.json(courseSchema.parse(toCourse(course, 0)));
+    response.json(
+      courseSchema.parse(toCourse(course, await countCourseLessons(course._id))),
+    );
   },
 );
 
@@ -234,6 +283,8 @@ coursesRouter.post(
     course.status = "archived";
     await course.save();
 
-    response.json(courseSchema.parse(toCourse(course, 0)));
+    response.json(
+      courseSchema.parse(toCourse(course, await countCourseLessons(course._id))),
+    );
   },
 );

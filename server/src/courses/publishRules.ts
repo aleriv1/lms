@@ -8,6 +8,7 @@ export function collectPublicationIssues(
     CourseAttributes,
     "title" | "category" | "audience" | "shortDescription"
   >,
+  publishedRequiredLessonsCount: number,
 ): FieldError[] {
   const issues: FieldError[] = [];
 
@@ -27,11 +28,12 @@ export function collectPublicationIssues(
     });
   }
 
-  // The lesson query lands with the Lesson model in slice 04.
-  issues.push({
-    field: "lessons",
-    message: "Добавьте хотя бы один опубликованный обязательный урок",
-  });
+  if (publishedRequiredLessonsCount === 0) {
+    issues.push({
+      field: "lessons",
+      message: "Добавьте хотя бы один опубликованный обязательный урок",
+    });
+  }
 
   return issues;
 }
