@@ -52,8 +52,12 @@ export function AdminUserDetailPage() {
   }
 
   const user = detail.user;
-  if (!user || user.id !== userId) {
-    return <ErrorState />;
+  // The card of the previously opened user is still in the store until the load
+  // effect runs, and that is a load, not a failure. The comparison is
+  // case-insensitive: objectIdSchema accepts both cases of the same id, so a
+  // hand-typed upper-case path would never match the id the server echoes back.
+  if (!user || user.id.toLowerCase() !== userId.toLowerCase()) {
+    return <Loader label="Загрузка пользователя" />;
   }
 
   const handleSave = async (
