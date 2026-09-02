@@ -134,7 +134,6 @@ export function LessonEditPage() {
       publishLesson.fulfilled.match(result) ||
       unpublishLesson.fulfilled.match(result)
     ) {
-      await dispatch(fetchLesson(lessonId));
       setSuccessMessage(
         lesson.status === "draft"
           ? "Урок опубликован"

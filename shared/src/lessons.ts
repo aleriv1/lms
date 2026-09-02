@@ -20,7 +20,11 @@ import {
 import { lessonStatusSchema } from "./enums.js";
 
 export const resourceLinkSchema = z.object({
-  title: z.string().trim().min(1, "Укажите название ссылки").max(RESOURCE_LINK_TITLE_MAX_LENGTH),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Укажите название ссылки")
+    .max(RESOURCE_LINK_TITLE_MAX_LENGTH, "Название ссылки не длиннее 120 символов"),
   url: httpUrlSchema,
 });
 export type ResourceLink = z.infer<typeof resourceLinkSchema>;
@@ -63,8 +67,8 @@ export const createLessonBodySchema = z.object({
   order: z.coerce
     .number()
     .int("Порядковый номер — целое число")
-    .min(LESSON_ORDER_MIN)
-    .max(LESSON_ORDER_MAX),
+    .min(LESSON_ORDER_MIN, "Порядковый номер не меньше 1")
+    .max(LESSON_ORDER_MAX, "Порядковый номер не больше 999"),
   durationMinutes: z.coerce
     .number()
     .int("Длительность — целое число минут")

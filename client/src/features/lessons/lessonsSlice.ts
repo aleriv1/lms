@@ -155,6 +155,12 @@ const lessonsSlice = createSlice({
       })
       .addCase(updateLesson.fulfilled, (state, action) => {
         state.detail.lesson = action.payload;
+      })
+      .addCase(publishLesson.fulfilled, (state, action) => {
+        state.detail.lesson = action.payload;
+      })
+      .addCase(unpublishLesson.fulfilled, (state, action) => {
+        state.detail.lesson = action.payload;
       });
   },
 });
