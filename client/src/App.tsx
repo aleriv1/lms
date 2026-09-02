@@ -8,6 +8,8 @@ import { CourseEditPage } from "./pages/CourseEditPage";
 import { CourseListPage } from "./pages/CourseListPage";
 import { LessonCreatePage } from "./pages/LessonCreatePage";
 import { LessonEditPage } from "./pages/LessonEditPage";
+import { TestCreatePage } from "./pages/TestCreatePage";
+import { TestEditPage } from "./pages/TestEditPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProfileEditPage } from "./pages/ProfileEditPage";
@@ -77,6 +79,14 @@ export function App() {
               <Route
                 path="/manage/lessons/:lessonId/edit"
                 element={<LessonEditPage />}
+              />
+              <Route
+                path="/manage/courses/:courseId/tests/new"
+                element={<TestCreatePage />}
+              />
+              <Route
+                path="/manage/tests/:testId/edit"
+                element={<TestEditPage />}
               />
             </Route>
             {isAuthenticated && <Route path="*" element={<NotFoundPage />} />}

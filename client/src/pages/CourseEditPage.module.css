@@ -48,7 +48,8 @@
   margin-bottom: var(--space-0);
 }
 
-.lessonSection {
+.lessonSection,
+.testSection {
   margin-top: var(--space-7);
 }
 

@@ -7,7 +7,7 @@ export type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
   error?: string;
   isRequired?: boolean;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
 };
 
 export function Select({
@@ -43,7 +43,7 @@ export function Select({
         aria-describedby={error ? errorId : props["aria-describedby"]}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

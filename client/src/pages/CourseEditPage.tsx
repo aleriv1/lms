@@ -19,6 +19,7 @@ import {
   updateCourse,
 } from "../features/courses/coursesSlice";
 import { LessonList } from "../features/lessons/LessonList";
+import { TestList } from "../features/tests/TestList";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import styles from "./CourseEditPage.module.css";
 
@@ -240,6 +241,10 @@ export function CourseEditPage() {
 
       <div className={styles.lessonSection}>
         <LessonList course={course} />
+      </div>
+
+      <div className={styles.testSection}>
+        <TestList course={course} />
       </div>
 
       <Modal
