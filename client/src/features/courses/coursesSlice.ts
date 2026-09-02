@@ -1,5 +1,6 @@
 import {
   courseListItemSchema,
+  lessonSummarySchema,
   type Course,
   type CourseDetail,
   type CourseListItem,
@@ -11,6 +12,15 @@ import {
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { toFormError, type FormError } from "../../api/formError";
+import { sortLessons } from "../lessons/lessonOrdering";
+import {
+  createLesson,
+  deleteLesson,
+  publishLesson,
+  reorderLessons,
+  unpublishLesson,
+  updateLesson,
+} from "../lessons/lessonsSlice";
 import {
   requestCourse,
   requestCourseArchive,
@@ -200,6 +210,74 @@ const coursesSlice = createSlice({
         replaceListCourse(state.list.items, action.payload);
         if (state.detail.course?.id === action.payload.id) {
           state.detail.course = { ...state.detail.course, ...action.payload };
+        }
+      })
+      .addCase(createLesson.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        state.detail.course.lessons = sortLessons([
+          ...state.detail.course.lessons,
+          lessonSummarySchema.parse(action.payload),
+        ]);
+        state.detail.course.lessonsCount += 1;
+      })
+      .addCase(updateLesson.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        const summary = lessonSummarySchema.parse(action.payload);
+        state.detail.course.lessons = sortLessons(
+          state.detail.course.lessons.map((lesson) =>
+            lesson.id === summary.id ? summary : lesson,
+          ),
+        );
+      })
+      .addCase(publishLesson.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        const summary = lessonSummarySchema.parse(action.payload);
+        state.detail.course.lessons = sortLessons(
+          state.detail.course.lessons.map((lesson) =>
+            lesson.id === summary.id ? summary : lesson,
+          ),
+        );
+      })
+      .addCase(unpublishLesson.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        const summary = lessonSummarySchema.parse(action.payload);
+        state.detail.course.lessons = sortLessons(
+          state.detail.course.lessons.map((lesson) =>
+            lesson.id === summary.id ? summary : lesson,
+          ),
+        );
+      })
+      .addCase(deleteLesson.fulfilled, (state, action) => {
+        const { courseId, lessonId } = action.payload;
+        if (state.detail.course?.id !== courseId) {
+          return;
+        }
+
+        state.detail.course.lessons = state.detail.course.lessons.filter(
+          (lesson) => lesson.id !== lessonId,
+        );
+        state.detail.course.lessonsCount -= 1;
+      })
+      .addCase(reorderLessons.fulfilled, (state, action) => {
+        const { courseId } = action.meta.arg;
+        if (state.detail.course?.id === courseId) {
+          state.detail.course = action.payload;
         }
       });
   },

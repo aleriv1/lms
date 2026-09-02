@@ -48,10 +48,6 @@
   margin-bottom: var(--space-0);
 }
 
-.lessonSection {
-  margin-top: var(--space-7);
-}
-
 @media (max-width: 48rem) {
   .heading {
     align-items: flex-start;

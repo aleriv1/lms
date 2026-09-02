@@ -18,6 +18,7 @@ import {
   publishCourse,
   updateCourse,
 } from "../features/courses/coursesSlice";
+import { LessonList } from "../features/lessons/LessonList";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import styles from "./CourseEditPage.module.css";
 
@@ -236,6 +237,10 @@ export function CourseEditPage() {
         submitLabel="Сохранить изменения"
         onSubmit={handleSave}
       />
+
+      <div className={styles.lessonSection}>
+        <LessonList course={course} />
+      </div>
 
       <Modal
         isOpen={confirmation !== null}

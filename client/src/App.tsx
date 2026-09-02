@@ -6,6 +6,8 @@ import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { CourseCreatePage } from "./pages/CourseCreatePage";
 import { CourseEditPage } from "./pages/CourseEditPage";
 import { CourseListPage } from "./pages/CourseListPage";
+import { LessonCreatePage } from "./pages/LessonCreatePage";
+import { LessonEditPage } from "./pages/LessonEditPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProfileEditPage } from "./pages/ProfileEditPage";
@@ -67,6 +69,14 @@ export function App() {
               <Route
                 path="/manage/courses/:courseId/edit"
                 element={<CourseEditPage />}
+              />
+              <Route
+                path="/manage/courses/:courseId/lessons/new"
+                element={<LessonCreatePage />}
+              />
+              <Route
+                path="/manage/lessons/:lessonId/edit"
+                element={<LessonEditPage />}
               />
             </Route>
             {isAuthenticated && <Route path="*" element={<NotFoundPage />} />}
