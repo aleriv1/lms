@@ -215,7 +215,9 @@ watch a state. There is no exception for looking just once to be sure.
 it open already and pay nothing to click. Your work is to make their pass short
 and exact: end the self-report with a numbered checklist under `## Проверить
 руками`, each item naming the URL, the input, and the result that would mean
-success. Write it for someone who has not read your code. A defect they find
+success. Start from a seeded database and from navigation the developer can
+follow — a step that asks them to assemble a URL from an identifier they do not
+have is not a step. Write it for someone who has not read your code. A defect they find
 comes back as a fix prompt; a checklist they cannot follow is a defect in your
 report.
 

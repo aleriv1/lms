@@ -8,7 +8,13 @@ export type ValidationTarget = "body" | "query" | "params";
 /**
  * Validates one part of the request against a schema from `@lms/shared` and
  * replaces it with the parsed value, so handlers receive normalised data.
- * On failure: 422, code "validation_error", one entry in `fields` per issue.
+ *
+ * A body or a query is something the caller filled in, so a failure there is
+ * 422 with the offending fields. A path parameter is not a filled-in field: an
+ * identifier that cannot be an identifier addresses nothing, and answering it
+ * with "check the fields you filled in" puts a form complaint on a page that
+ * has no form. Those fail as 404, the same answer a well-formed identifier for
+ * a missing entity gets.
  */
 export function validate(
   schema: ZodType,
@@ -19,15 +25,17 @@ export function validate(
 
     if (!result.success) {
       next(
-        new AppError(
-          422,
-          "validation_error",
-          "Проверьте правильность заполнения полей",
-          result.error.issues.map((issue) => ({
-            field: issue.path.join("."),
-            message: issue.message,
-          })),
-        ),
+        target === "params"
+          ? new AppError(404, "not_found", "Страница не найдена")
+          : new AppError(
+              422,
+              "validation_error",
+              "Проверьте правильность заполнения полей",
+              result.error.issues.map((issue) => ({
+                field: issue.path.join("."),
+                message: issue.message,
+              })),
+            ),
       );
       return;
     }
