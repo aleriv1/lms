@@ -26,18 +26,17 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export function getNavItems(user: PublicUser): NavItem[] {
-  if (user.role === "teacher") {
-    return [
-      { to: "/manage/courses", label: "Каталог курсов" },
-      {
-        to: `/manage/courses?authorId=${user.id}`,
-        label: "Мои курсы",
-      },
-      { to: "/profile", label: "Личный кабинет" },
-    ];
+  const items = NAV_ITEMS[user.role];
+
+  if (user.role !== "teacher") {
+    return items;
   }
 
-  return NAV_ITEMS[user.role];
+  return items.flatMap((item) =>
+    item.to === "/manage/courses"
+      ? [item, { to: `/manage/courses?authorId=${user.id}`, label: "Мои курсы" }]
+      : [item],
+  );
 }
 
 /** «Каталог курсов» and «Мои курсы» share a path and differ only by query. */

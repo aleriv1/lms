@@ -1,11 +1,12 @@
-import type {
-  Course,
-  CourseDetail,
-  CourseListItem,
-  CoursesQuery,
-  CreateCourseBody,
-  ListMeta,
-  UpdateCourseBody,
+import {
+  courseListItemSchema,
+  type Course,
+  type CourseDetail,
+  type CourseListItem,
+  type CoursesQuery,
+  type CreateCourseBody,
+  type ListMeta,
+  type UpdateCourseBody,
 } from "@lms/shared";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -138,7 +139,7 @@ export const archiveCourse = createAsyncThunk<
 function replaceListCourse(items: CourseListItem[], course: Course): void {
   const index = items.findIndex((item) => item.id === course.id);
   if (index >= 0) {
-    items[index] = course;
+    items[index] = courseListItemSchema.parse(course);
   }
 }
 

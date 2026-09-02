@@ -164,6 +164,21 @@ export function CourseListPage() {
     void dispatch(fetchCourses(query));
   }, [dispatch, query]);
 
+  useEffect(() => {
+    if (list.status !== "ready") {
+      return;
+    }
+    const lastPage = Math.max(list.meta.totalPages, 1);
+    if (query.page <= lastPage) {
+      return;
+    }
+    setSearchParams(
+      (currentParams) =>
+        toSearchParams({ ...readCoursesQuery(currentParams), page: lastPage }),
+      { replace: true },
+    );
+  }, [list.status, list.meta.totalPages, query.page, setSearchParams]);
+
   const performPublish = async (courseId: string) => {
     setActionError(null);
     setIsActionLoading(true);
