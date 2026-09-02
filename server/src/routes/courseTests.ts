@@ -46,6 +46,11 @@ courseTestsRouter.post(
     );
     const body = request.body as CreateTestBody;
 
+    // The body is judged before the state it would be written into:
+    // specification 9.5 keeps 422 for a body that is wrong on its own terms and
+    // 409 for a conflict with what is stored. A 409 carries no `fields`, so
+    // answering it first would hide the form errors the body also has.
+    const questions = buildQuestions(body.questions);
     await ensureTestLinkIsFree(course._id, body.lessonId);
 
     try {
@@ -55,7 +60,7 @@ courseTestsRouter.post(
         title: body.title,
         passingScore: body.passingScore,
         version: 1,
-        questions: buildQuestions(body.questions),
+        questions,
       });
 
       response.status(201).json(testSchema.parse(toTest(test)));
@@ -92,13 +97,14 @@ courseTestsRouter.patch(
     );
     const body = request.body as UpdateTestBody;
 
+    const questions = buildQuestions(body.questions);
     await ensureTestLinkIsFree(test.courseId, body.lessonId, test._id);
 
     test.title = body.title;
     test.lessonId =
       body.lessonId === null ? null : new Types.ObjectId(body.lessonId);
     test.passingScore = body.passingScore;
-    test.questions = buildQuestions(body.questions);
+    test.questions = questions;
     // A reference counter (specification 7.17): nothing is restored from it, so
     // it grows on every save rather than on a detected change.
     test.version += 1;
