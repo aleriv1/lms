@@ -1,3 +1,4 @@
+import { publicUserSchema } from "@lms/shared";
 import type {
   ChangePasswordBody,
   LoginBody,
@@ -10,6 +11,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { ApiError } from "../../api/ApiError";
 import { toFormError } from "../../api/formError";
 import type { FormError } from "../../api/formError";
+import { updateAdminUser } from "../users/adminUsersSlice";
 import {
   requestLogin,
   requestLogout,
@@ -162,6 +164,11 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = action.payload;
         state.status = "authenticated";
+      })
+      .addCase(updateAdminUser.fulfilled, (state, action) => {
+        if (state.user?.id === action.payload.id) {
+          state.user = publicUserSchema.parse(action.payload);
+        }
       });
   },
 });

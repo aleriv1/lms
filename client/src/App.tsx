@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/layout/AppLayout";
+import { AdminUserDetailPage } from "./pages/AdminUserDetailPage";
+import { AdminUserListPage } from "./pages/AdminUserListPage";
 import { ErrorState, Loader } from "./components/ui";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { CourseCreatePage } from "./pages/CourseCreatePage";
@@ -87,6 +89,13 @@ export function App() {
               <Route
                 path="/manage/tests/:testId/edit"
                 element={<TestEditPage />}
+              />
+            </Route>
+            <Route element={<ProtectedRoute roles={["admin"]} />}>
+              <Route path="/admin/users" element={<AdminUserListPage />} />
+              <Route
+                path="/admin/users/:userId"
+                element={<AdminUserDetailPage />}
               />
             </Route>
             {isAuthenticated && <Route path="*" element={<NotFoundPage />} />}

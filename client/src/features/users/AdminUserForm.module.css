@@ -1,0 +1,13 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.error,
+.error p {
+  color: var(--color-danger);
+}

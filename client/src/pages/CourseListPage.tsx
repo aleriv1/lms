@@ -168,6 +168,7 @@ export function CourseListPage() {
     if (list.status !== "ready") {
       return;
     }
+    if (list.meta.page !== query.page) return;
     const lastPage = Math.max(list.meta.totalPages, 1);
     if (query.page <= lastPage) {
       return;
@@ -177,7 +178,7 @@ export function CourseListPage() {
         toSearchParams({ ...readCoursesQuery(currentParams), page: lastPage }),
       { replace: true },
     );
-  }, [list.status, list.meta.totalPages, query.page, setSearchParams]);
+  }, [list.status, list.meta.totalPages, list.meta.page, query.page, setSearchParams]);
 
   const performPublish = async (courseId: string) => {
     setActionError(null);

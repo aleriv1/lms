@@ -5,6 +5,7 @@ import { authReducer, sessionExpired } from "../features/auth/authSlice";
 import { coursesReducer } from "../features/courses/coursesSlice";
 import { lessonsReducer } from "../features/lessons/lessonsSlice";
 import { testsReducer } from "../features/tests/testsSlice";
+import { adminUsersReducer } from "../features/users/adminUsersSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     courses: coursesReducer,
     lessons: lessonsReducer,
     tests: testsReducer,
+    adminUsers: adminUsersReducer,
   },
 });
 
