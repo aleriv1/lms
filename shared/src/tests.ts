@@ -60,7 +60,7 @@ export const questionOptionInputSchema = z.object({
     .string()
     .trim()
     .min(QUESTION_OPTION_TEXT_MIN_LENGTH, "Текст варианта обязателен")
-    .max(QUESTION_OPTION_TEXT_MAX_LENGTH),
+    .max(QUESTION_OPTION_TEXT_MAX_LENGTH, "Текст варианта не длиннее 300 символов"),
   isCorrect: z.boolean(),
 });
 export type QuestionOptionInput = z.infer<typeof questionOptionInputSchema>;
@@ -76,13 +76,13 @@ export const questionInputSchema = z
       .string()
       .trim()
       .min(QUESTION_TEXT_MIN_LENGTH, "Текст вопроса не короче 3 символов")
-      .max(QUESTION_TEXT_MAX_LENGTH),
+      .max(QUESTION_TEXT_MAX_LENGTH, "Текст вопроса не длиннее 500 символов"),
     type: questionTypeSchema,
-    order: z.number().int().min(1),
+    order: z.number().int().min(1, "Порядковый номер вопроса не меньше 1"),
     options: z
       .array(questionOptionInputSchema)
       .min(QUESTION_OPTIONS_MIN_COUNT, "Нужно не менее двух вариантов")
-      .max(QUESTION_OPTIONS_MAX_COUNT),
+      .max(QUESTION_OPTIONS_MAX_COUNT, "Не больше десяти вариантов"),
   })
   .superRefine((question, ctx) => {
     const correctCount = question.options.filter((option) => option.isCorrect).length;
@@ -116,18 +116,18 @@ export const createTestBodySchema = z.object({
     .string()
     .trim()
     .min(TEST_TITLE_MIN_LENGTH, "Название не короче 3 символов")
-    .max(TEST_TITLE_MAX_LENGTH),
+    .max(TEST_TITLE_MAX_LENGTH, "Название не длиннее 150 символов"),
   lessonId: objectIdSchema.nullable().default(null),
   passingScore: z.coerce
     .number()
-    .int()
-    .min(PASSING_SCORE_MIN)
-    .max(PASSING_SCORE_MAX)
+    .int("Проходной балл — целое число")
+    .min(PASSING_SCORE_MIN, "Проходной балл не меньше 1")
+    .max(PASSING_SCORE_MAX, "Проходной балл не больше 100")
     .default(70),
   questions: z
     .array(questionInputSchema)
     .min(TEST_QUESTIONS_MIN_COUNT, "Добавьте хотя бы один вопрос")
-    .max(TEST_QUESTIONS_MAX_COUNT),
+    .max(TEST_QUESTIONS_MAX_COUNT, "Не больше ста вопросов"),
 });
 export type CreateTestBody = z.infer<typeof createTestBodySchema>;
 
