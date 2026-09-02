@@ -140,9 +140,15 @@ Refusals you must render, all of them carrying a Russian `message`:
    the form as `useForm<z.input<typeof adminUpdateUserBodySchema>, unknown,
    AdminUpdateUserBody>` and let the resolver convert. Do not normalise the
    empty string in the component, and do not add a "clear the group" checkbox.
-9. **Revoking is behind a `Modal` confirmation** naming the course, in the shape
-   `CourseListPage` uses for archive and delete. It is the only modal of this
-   slice: saving the edit form is not confirmed.
+9. **Two `Modal` confirmations, both in the shape `CourseListPage` uses for
+   archive and delete.** Revoking an assignment, naming the course. And saving
+   the edit form **when the submitted `role` or `status` differs from the loaded
+   user's** — specification 7.14 requires a confirmation for those two fields
+   and only for them. Compare against `user.role` and `user.status`, name in the
+   modal what changes and to what, and submit from the modal's confirm button; a
+   submit that touches only `name` or `groupName` saves without asking. This is
+   presentation, not a rule: the server still decides, and the refusals of
+   decision 5 are rendered the same way whichever path the submit took.
 10. **When the administrator edits their own card, the session copy is
     updated.** `AppLayout` and `/profile` read `state.auth.user`, so a renamed
     administrator would keep the old name in the header until a reload. Add one
