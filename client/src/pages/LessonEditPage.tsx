@@ -59,6 +59,7 @@ export function LessonEditPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<FormError | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [hasUnsavedInput, setHasUnsavedInput] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   useEffect(() => {
@@ -180,7 +181,7 @@ export function LessonEditPage() {
         </div>
         <div className={styles.actions}>
           <Button
-            disabled={isActionLoading}
+            disabled={isActionLoading || hasUnsavedInput}
             onClick={() => void handlePublication()}
           >
             {lesson.status === "draft"
@@ -200,6 +201,11 @@ export function LessonEditPage() {
         </div>
       </div>
 
+      {hasUnsavedInput && (
+        <p className={styles.unsaved} role="status">
+          Сначала сохраните изменения: публикация их не сохраняет.
+        </p>
+      )}
       {successMessage && (
         <p className={styles.success} role="status">
           {successMessage}
@@ -212,6 +218,7 @@ export function LessonEditPage() {
         defaultValues={toFormValues(lesson)}
         submitLabel="Сохранить изменения"
         onSubmit={handleSave}
+        onDirtyChange={setHasUnsavedInput}
       />
 
       <Modal

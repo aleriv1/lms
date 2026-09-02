@@ -58,3 +58,8 @@
     justify-content: flex-start;
   }
 }
+
+.unsaved {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+}

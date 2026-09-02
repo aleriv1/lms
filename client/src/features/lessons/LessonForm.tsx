@@ -6,7 +6,7 @@ import {
   createLessonBodySchema,
   type CreateLessonBody,
 } from "@lms/shared";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 
@@ -18,6 +18,8 @@ export type LessonFormProps = {
   defaultValues?: Partial<CreateLessonBody>;
   submitLabel: string;
   onSubmit: (body: CreateLessonBody) => Promise<FormError | null>;
+  /** Lets the page know there is unsaved input, so it can refuse to leave it behind. */
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 type LessonFormInput = z.input<typeof createLessonBodySchema>;
@@ -26,6 +28,7 @@ export function LessonForm({
   defaultValues,
   submitLabel,
   onSubmit,
+  onDirtyChange,
 }: LessonFormProps) {
   const [generalError, setGeneralError] = useState<string | null>(null);
   const form = useForm<LessonFormInput, unknown, CreateLessonBody>({
@@ -48,11 +51,21 @@ export function LessonForm({
     name: "resourceLinks",
   });
 
+  const { isDirty } = form.formState;
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   const submit = form.handleSubmit(async (body) => {
     setGeneralError(null);
     const error = await onSubmit(body);
 
     if (!error) {
+      // What is on screen is now what is stored, so it is no longer unsaved
+      // input. Reset from the raw values rather than the parsed body: the two
+      // differ where the schema transforms, and the fields must not change
+      // under the author after a successful save.
+      form.reset(form.getValues());
       return;
     }
 
