@@ -41,6 +41,10 @@ const LESSON_CONTENT_OPTIONS: sanitizeHtml.IOptions = {
     img: ["src", "alt", "title"],
   },
   allowedSchemes: ["http", "https", "mailto"],
+  // Specification 7.13 allows http and https only. `allowedSchemes` does not
+  // cover a schemeless URL: `//host/path` carries no scheme to check, and the
+  // package lets it through unless this is off.
+  allowProtocolRelative: false,
   disallowedTagsMode: "discard",
   transformTags: {
     a: sanitizeHtml.simpleTransform("a", {

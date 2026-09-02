@@ -35,6 +35,15 @@ describe("sanitizeLessonContent", () => {
     expect(content).toContain("Нажми");
   });
 
+  it("removes a schemeless link and image source", () => {
+    const content = sanitizeLessonContent(
+      '<a href="//example.net">Ссылка</a><img src="//example.net/a.png">',
+    );
+
+    expect(content).not.toContain("example.net");
+    expect(content).toContain("Ссылка");
+  });
+
   it("keeps allowed formatting and marks external links as safe", () => {
     const content = sanitizeLessonContent(
       '<p><strong>Важно</strong></p><ul><li>Пункт</li></ul>' +
