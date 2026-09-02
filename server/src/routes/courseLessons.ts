@@ -1,5 +1,4 @@
 import {
-  courseDetailSchema,
   createLessonBodySchema,
   lessonSchema,
   objectIdSchema,
@@ -14,25 +13,26 @@ import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 
 import { loadOwnedCourse } from "../courses/courseAccess.js";
+import { buildCourseDetail } from "../courses/courseDetail.js";
+import { isDuplicateKeyError } from "../db/duplicateKey.js";
 import { AppError } from "../errors/AppError.js";
 import { loadCourseLesson } from "../lessons/lessonAccess.js";
 import {
   applyReorder,
   ensureOrderIsFree,
-  isDuplicateKeyError,
   orderConflictError,
   planReorder,
 } from "../lessons/lessonOrder.js";
 import { sanitizeLessonContent } from "../lessons/sanitizeContent.js";
 import { getAuthenticatedUser } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
-import { toCourse } from "../models/Course.js";
+import { Lesson, toLesson, type LessonDocument } from "../models/Lesson.js";
 import {
-  Lesson,
-  toLesson,
-  toLessonSummary,
-  type LessonDocument,
-} from "../models/Lesson.js";
+  assertLessonHasNoTest,
+  attachTestToLesson,
+  ensureTestCanBeAttached,
+  findLinkedTestId,
+} from "../tests/testLink.js";
 
 /** Mounted under `/courses/:courseId/lessons`, so `courseId` comes from the parent. */
 export const courseLessonsRouter = Router({ mergeParams: true });
@@ -75,16 +75,6 @@ function prepareContent(raw: string): string {
   return content;
 }
 
-/**
- * Until slice 05 there is no `Test` collection, so any identifier sent here
- * points at a test that does not exist. The branch becomes a real lookup there.
- */
-function ensureTestExists(testId: string | null): void {
-  if (testId !== null) {
-    throw new AppError(404, "not_found", "Тест не найден");
-  }
-}
-
 function readCourseLessons(courseId: string): Promise<LessonDocument[]> {
   return Lesson.find({ courseId }).sort({ order: 1 }).exec();
 }
@@ -101,12 +91,19 @@ courseLessonsRouter.post(
     );
     const body = request.body as CreateLessonBody;
 
-    ensureTestExists(body.testId);
+    // The lesson does not exist yet, so the test is checked before the write
+    // and attached after it. There is no transaction — Mongo runs as a single
+    // container — and a race between the two writes is repaired by saving the
+    // form again.
+    if (body.testId !== null) {
+      await ensureTestCanBeAttached(course._id, body.testId);
+    }
     const content = prepareContent(body.content);
     await ensureOrderIsFree(course._id, body.order);
 
+    let lesson: LessonDocument;
     try {
-      const lesson = await Lesson.create({
+      lesson = await Lesson.create({
         courseId: course._id,
         title: body.title,
         order: body.order,
@@ -117,8 +114,6 @@ courseLessonsRouter.post(
         isRequired: body.isRequired,
         status: "draft",
       });
-
-      response.status(201).json(lessonSchema.parse(toLesson(lesson)));
     } catch (error) {
       // The check above leaves a window open; the unique index closes it.
       if (isDuplicateKeyError(error)) {
@@ -127,6 +122,17 @@ courseLessonsRouter.post(
 
       throw error;
     }
+
+    // Outside the block above: a duplicate key raised while linking the test
+    // would be a conflict over the lesson's test, not over its number.
+    if (body.testId !== null) {
+      await attachTestToLesson(course._id, body.testId, lesson._id);
+    }
+
+    // A lesson created a moment ago can carry no other link.
+    response
+      .status(201)
+      .json(lessonSchema.parse(toLesson(lesson, body.testId)));
   },
 );
 
@@ -149,14 +155,7 @@ courseLessonsRouter.post(
     );
     await applyReorder(course._id, plan);
 
-    const lessons = await readCourseLessons(courseId);
-    response.json(
-      courseDetailSchema.parse({
-        ...toCourse(course, lessons.length),
-        lessons: lessons.map((lesson) => toLessonSummary(lesson)),
-        tests: [],
-      }),
-    );
+    response.json(await buildCourseDetail(course));
   },
 );
 
@@ -183,8 +182,12 @@ courseLessonsRouter.patch(
       response.locals.lessonUpdateFields as (keyof UpdateLessonBody)[],
     );
 
-    if (submittedFields.has("testId") && body.testId !== undefined) {
-      ensureTestExists(body.testId);
+    // Specification 7.13 lets the lesson form pick a test, but only attaching
+    // is honoured here: `LessonForm` sends `testId: null` unconditionally, so
+    // treating null as "detach" would break the link on every lesson save.
+    // Detaching belongs to the test form, which owns the field.
+    if (submittedFields.has("testId") && body.testId) {
+      await attachTestToLesson(lesson.courseId, body.testId, lesson._id);
     }
     if (submittedFields.has("title") && body.title !== undefined) {
       lesson.title = body.title;
@@ -225,7 +228,11 @@ courseLessonsRouter.patch(
       throw error;
     }
 
-    response.json(lessonSchema.parse(toLesson(lesson)));
+    response.json(
+      lessonSchema.parse(
+        toLesson(lesson, await findLinkedTestId(lesson._id)),
+      ),
+    );
   },
 );
 
@@ -242,6 +249,8 @@ courseLessonsRouter.delete(
       lessonId,
       getAuthenticatedUser(request),
     );
+
+    await assertLessonHasNoTest(lesson._id);
 
     // Gaps in the numbering are fine: order comes from sorting by `order`, and
     // renumbering the remaining lessons would be an unexpected side effect.
@@ -287,7 +296,9 @@ courseLessonsRouter.post(
     lesson.status = "published";
     await lesson.save();
 
-    response.json(lessonSchema.parse(toLesson(lesson)));
+    response.json(
+      lessonSchema.parse(toLesson(lesson, await findLinkedTestId(lesson._id))),
+    );
   },
 );
 
@@ -313,6 +324,8 @@ courseLessonsRouter.post(
     lesson.status = "draft";
     await lesson.save();
 
-    response.json(lessonSchema.parse(toLesson(lesson)));
+    response.json(
+      lessonSchema.parse(toLesson(lesson, await findLinkedTestId(lesson._id))),
+    );
   },
 );

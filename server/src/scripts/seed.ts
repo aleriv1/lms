@@ -6,6 +6,7 @@ import { hashPassword } from "../auth/password.js";
 import { connectToDatabase } from "../db/connect.js";
 import { Course } from "../models/Course.js";
 import { Lesson } from "../models/Lesson.js";
+import { Test } from "../models/Test.js";
 import { User } from "../models/User.js";
 
 const DEMO_USERS = [
@@ -105,6 +106,57 @@ try {
 
     await Lesson.create({ ...demoLesson, courseId: course._id, videoUrl: null });
     console.info(`${demoLesson.title}: created`);
+  }
+
+  // The test screens need something to open, the same reason the course above
+  // exists. One test with both question types of specification 4.4; the full
+  // demo set of specification 12 arrives in slice 10.
+  const DEMO_TEST_TITLE = "Проверка знаний по вводному инструктажу";
+  const publishedLesson = await Lesson.findOne({
+    courseId: course._id,
+    order: 1,
+  });
+  if (!publishedLesson) {
+    throw new Error("the first demo lesson is missing after seeding lessons");
+  }
+
+  const existingTest = await Test.exists({
+    courseId: course._id,
+    title: DEMO_TEST_TITLE,
+  });
+  if (existingTest) {
+    console.info(`${DEMO_TEST_TITLE}: already present`);
+  } else {
+    await Test.create({
+      courseId: course._id,
+      lessonId: publishedLesson._id,
+      title: DEMO_TEST_TITLE,
+      passingScore: 70,
+      version: 1,
+      questions: [
+        {
+          text: "Кто проходит вводный инструктаж?",
+          type: "single",
+          order: 1,
+          options: [
+            { text: "Каждый работник до начала работ", isCorrect: true },
+            { text: "Только руководители подразделений", isCorrect: false },
+            { text: "Никто, инструктаж добровольный", isCorrect: false },
+          ],
+        },
+        {
+          text: "Что относится к средствам индивидуальной защиты?",
+          type: "multiple",
+          order: 2,
+          options: [
+            { text: "Защитная каска", isCorrect: true },
+            { text: "Защитные очки", isCorrect: true },
+            { text: "Служебный автомобиль", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    console.info(`${DEMO_TEST_TITLE}: created`);
   }
 } catch (error) {
   console.error("Failed to seed demo data", error);

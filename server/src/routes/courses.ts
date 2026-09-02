@@ -1,5 +1,4 @@
 import {
-  courseDetailSchema,
   courseListItemSchema,
   courseSchema,
   coursesQuerySchema,
@@ -16,7 +15,9 @@ import { Types } from "mongoose";
 import { z } from "zod";
 
 import { courseLessonsRouter } from "./courseLessons.js";
+import { courseTestsRouter } from "./courseTests.js";
 import { loadOwnedCourse } from "../courses/courseAccess.js";
+import { buildCourseDetail } from "../courses/courseDetail.js";
 import { buildCourseFilter, buildCourseSort } from "../courses/courseQuery.js";
 import { collectPublicationIssues } from "../courses/publishRules.js";
 import { AppError } from "../errors/AppError.js";
@@ -32,7 +33,7 @@ import {
   toCourse,
   toCourseListItem,
 } from "../models/Course.js";
-import { Lesson, toLessonSummary } from "../models/Lesson.js";
+import { Lesson } from "../models/Lesson.js";
 
 export const coursesRouter = Router();
 
@@ -71,8 +72,9 @@ async function countLessonsPerCourse(
 
 coursesRouter.use(requireAuth, requireRole("teacher", "admin"));
 
-// Mounted after the role check so the lesson routes inherit it.
+// Mounted after the role check so the lesson and test routes inherit it.
 coursesRouter.use("/:courseId/lessons", courseLessonsRouter);
+coursesRouter.use("/:courseId/tests", courseTestsRouter);
 
 coursesRouter.get(
   "/",
@@ -140,18 +142,8 @@ coursesRouter.get(
       courseId,
       getAuthenticatedUser(request),
     );
-    const lessons = await Lesson.find({ courseId: course._id }).sort({
-      order: 1,
-    });
 
-    response.json(
-      courseDetailSchema.parse({
-        ...toCourse(course, lessons.length),
-        lessons: lessons.map((lesson) => toLessonSummary(lesson)),
-        // Tests arrive in slice 05.
-        tests: [],
-      }),
-    );
+    response.json(await buildCourseDetail(course));
   },
 );
 

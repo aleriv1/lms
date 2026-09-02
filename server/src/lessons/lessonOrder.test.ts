@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { isDuplicateKeyError } from "../db/duplicateKey.js";
 import { AppError } from "../errors/AppError.js";
-import { isDuplicateKeyError, planReorder } from "./lessonOrder.js";
+import { planReorder } from "./lessonOrder.js";
 
 const FIRST = "507f1f77bcf86cd799439011";
 const SECOND = "507f1f77bcf86cd799439012";

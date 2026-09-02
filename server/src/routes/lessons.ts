@@ -10,6 +10,7 @@ import {
 import { requireRole } from "../middleware/requireRole.js";
 import { validate } from "../middleware/validate.js";
 import { toLesson } from "../models/Lesson.js";
+import { findLinkedTestId } from "../tests/testLink.js";
 
 /**
  * Reading a single lesson is flat because specification 6 routes the editing
@@ -32,6 +33,8 @@ lessonsRouter.get(
       getAuthenticatedUser(request),
     );
 
-    response.json(lessonSchema.parse(toLesson(lesson)));
+    response.json(
+      lessonSchema.parse(toLesson(lesson, await findLinkedTestId(lesson._id))),
+    );
   },
 );

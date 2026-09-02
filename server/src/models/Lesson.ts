@@ -68,9 +68,14 @@ export const Lesson = model<LessonAttributes>("Lesson", lessonSchema);
 
 /**
  * `testId` is derived, not stored: specification 8.4 keeps the link in
- * `Test.lessonId`. Until the Test model arrives in slice 05 it is always null.
+ * `Test.lessonId`, so the caller looks it up and passes it in. The argument has
+ * no default on purpose — a lesson silently reported without its test would be
+ * a lie, and this way the compiler names every place that has to look.
  */
-export function toLesson(lesson: LessonRecord): LessonResponse {
+export function toLesson(
+  lesson: LessonRecord,
+  testId: string | null,
+): LessonResponse {
   return {
     id: lesson._id.toString(),
     courseId: lesson.courseId.toString(),
@@ -85,13 +90,16 @@ export function toLesson(lesson: LessonRecord): LessonResponse {
     })),
     isRequired: lesson.isRequired,
     status: lesson.status,
-    testId: null,
+    testId,
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
   };
 }
 
-export function toLessonSummary(lesson: LessonRecord): LessonSummary {
+export function toLessonSummary(
+  lesson: LessonRecord,
+  testId: string | null,
+): LessonSummary {
   return {
     id: lesson._id.toString(),
     title: lesson.title,
@@ -99,6 +107,6 @@ export function toLessonSummary(lesson: LessonRecord): LessonSummary {
     durationMinutes: lesson.durationMinutes,
     isRequired: lesson.isRequired,
     status: lesson.status,
-    testId: null,
+    testId,
   };
 }
