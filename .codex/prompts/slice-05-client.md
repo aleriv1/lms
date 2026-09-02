@@ -104,7 +104,10 @@ Refusals you must render, all of them carrying a Russian `message`:
    `course.lessons`; disable a lesson whose `testId` is set and is not this
    test, and disable the empty option when `course.tests` already holds another
    test with `lessonId === null`. That prevents most `409`s; keep rendering the
-   ones that still arrive.
+   ones that still arrive. `Select` cannot disable one option today, so it gets
+   the two-line change named in the file list below — disable the option, do
+   not hide it: an author who cannot see the lesson cannot tell whether it is
+   taken or gone.
 5. **`passingScore` is one number input**, defaulting to
    `DEFAULT_PASSING_SCORE`, with `min` and `max` from `PASSING_SCORE_MIN` and
    `PASSING_SCORE_MAX`.
@@ -172,6 +175,11 @@ Edited, and only in the ways named:
 - `client/src/store/index.ts` — register `testsReducer` as `tests`.
 - `client/src/pages/CourseEditPage.tsx` and its `.module.css` — a `<TestList
   course={course} />` section directly after the lesson section.
+- `client/src/components/ui/Select/Select.tsx` — two lines and nothing more:
+  the `options` element type becomes `{ value: string; label: string; disabled?:
+  boolean }`, and the rendered `<option>` takes `disabled={option.disabled}`.
+  The field is optional, so every existing caller keeps working; do not touch
+  its CSS module, its markup or its other props.
 
 Nothing else. In particular do not touch `LessonForm.tsx`: the lesson form's
 own test picker is not part of this slice, and its hardcoded `testId: null` is
@@ -184,7 +192,9 @@ deliberate for now.
   `attemptResultSchema` — they exist in `shared/` for slice 08.
 - Detaching a test from the lesson's own form; publication rules that mention
   tests; test statistics.
-- New UI primitives. If you need one, stop and report instead of inventing it.
+- New UI primitives. The two-line `Select` change above is not one — it is
+  named, bounded and already decided. If you need anything beyond it, stop and
+  report instead of inventing it.
 - New dependencies. React Hook Form, `@hookform/resolvers`, Redux Toolkit and
   React Router are already there at their pinned versions.
 
