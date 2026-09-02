@@ -1,11 +1,8 @@
 import { coursesQuerySchema } from "@lms/shared";
 import { describe, expect, it } from "vitest";
 
-import {
-  buildCourseFilter,
-  buildCourseSort,
-  escapeRegExp,
-} from "./courseQuery.js";
+import { buildCourseFilter, buildCourseSort } from "./courseQuery.js";
+import { escapeRegExp } from "../db/escapeRegExp.js";
 
 describe("course query helpers", () => {
   it("escapes RegExp metacharacters and matches them literally", () => {

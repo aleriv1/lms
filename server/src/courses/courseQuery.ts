@@ -1,12 +1,8 @@
 import type { CoursesQuery } from "@lms/shared";
 import type { FilterQuery, SortOrder } from "mongoose";
 
+import { escapeRegExp } from "../db/escapeRegExp.js";
 import type { CourseAttributes } from "../models/Course.js";
-
-/** Escapes every RegExp metacharacter, so user input is matched literally. */
-export function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 /** Builds the MongoDB filter for `GET /courses` from the validated query. */
 export function buildCourseFilter(

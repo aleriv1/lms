@@ -9,21 +9,54 @@ import { Lesson } from "../models/Lesson.js";
 import { Test } from "../models/Test.js";
 import { User } from "../models/User.js";
 
+/**
+ * The second teacher exists so that the refusal by course ownership (403 from
+ * `loadOwnedCourse`) has something to refuse; the blocked student and the group
+ * names exist so that the administrative filters and the "active user only"
+ * rule of specification 4.3 can be told apart from doing nothing.
+ */
 const DEMO_USERS = [
   {
     email: "admin@lms.local",
     name: "Администратор Системы",
     role: "admin",
+    groupName: null,
+    status: "active",
   },
   {
     email: "teacher@lms.local",
     name: "Преподаватель Иванов",
     role: "teacher",
+    groupName: null,
+    status: "active",
+  },
+  {
+    email: "teacher2@lms.local",
+    name: "Преподаватель Сидорова",
+    role: "teacher",
+    groupName: null,
+    status: "active",
   },
   {
     email: "student@lms.local",
     name: "Обучающийся Петров",
     role: "student",
+    groupName: "Смена А",
+    status: "active",
+  },
+  {
+    email: "student2@lms.local",
+    name: "Обучающаяся Кузнецова",
+    role: "student",
+    groupName: "Смена Б",
+    status: "active",
+  },
+  {
+    email: "blocked@lms.local",
+    name: "Заблокированный Смирнов",
+    role: "student",
+    groupName: "Смена Б",
+    status: "blocked",
   },
 ] as const;
 
@@ -40,7 +73,6 @@ try {
     await User.create({
       ...demoUser,
       passwordHash: await hashPassword("Password1"),
-      status: "active",
     });
     console.info(`${demoUser.email}: created`);
   }
@@ -157,6 +189,62 @@ try {
       ],
     });
     console.info(`${DEMO_TEST_TITLE}: created`);
+  }
+
+  // Assigning needs a published course (specification 4.3), and the course
+  // above has to stay a draft — the hand checklists of slices 03-05 stand on
+  // it. So the published one belongs to the second teacher, which also gives
+  // the ownership refusal something to refuse. It satisfies the conditions of
+  // specification 4.2 for real: one published required lesson, not a status set
+  // by hand.
+  const secondTeacher = await User.findOne({ email: "teacher2@lms.local" });
+  if (!secondTeacher) {
+    throw new Error("teacher2@lms.local is missing after seeding users");
+  }
+
+  const PUBLISHED_COURSE_TITLE = "Правила технической эксплуатации";
+  let publishedCourse = await Course.findOne({
+    title: PUBLISHED_COURSE_TITLE,
+    authorId: secondTeacher._id,
+  });
+
+  if (publishedCourse) {
+    console.info(`${PUBLISHED_COURSE_TITLE}: already present`);
+  } else {
+    publishedCourse = await Course.create({
+      title: PUBLISHED_COURSE_TITLE,
+      category: "Эксплуатация",
+      audience: "technical_staff",
+      shortDescription:
+        "Порядок технической эксплуатации оборудования и допуск к работам.",
+      description:
+        "Требования к содержанию оборудования, периодичность осмотров, порядок допуска.",
+      authorId: secondTeacher._id,
+      status: "published",
+      publishedAt: new Date(),
+    });
+    console.info(`${PUBLISHED_COURSE_TITLE}: created`);
+  }
+
+  const PUBLISHED_LESSON_TITLE = "Допуск к работам на оборудовании";
+  const existingPublishedLesson = await Lesson.exists({
+    courseId: publishedCourse._id,
+    order: 1,
+  });
+  if (existingPublishedLesson) {
+    console.info(`${PUBLISHED_LESSON_TITLE}: already present`);
+  } else {
+    await Lesson.create({
+      courseId: publishedCourse._id,
+      title: PUBLISHED_LESSON_TITLE,
+      order: 1,
+      content: "<p>Кто и на каком основании допускается к работам.</p>",
+      durationMinutes: 25,
+      isRequired: true,
+      status: "published",
+      videoUrl: null,
+    });
+    console.info(`${PUBLISHED_LESSON_TITLE}: created`);
   }
 } catch (error) {
   console.error("Failed to seed demo data", error);
