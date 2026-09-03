@@ -38,10 +38,32 @@ export type PairProgress = {
 };
 
 export type PairScope = {
-  /** Omitted — the whole database. Set — one learner's own two screens. */
-  userId?: Types.ObjectId;
+  /**
+   * Omitted — every learner. One identifier — a learner's own two screens. A
+   * list — the users a filter of 7.15 left on the statistics page; the pairs
+   * have to be narrowed with the table, or the summary above it would describe
+   * a different set of people than the rows below.
+   */
+  users?: Types.ObjectId | Types.ObjectId[];
+  /** Set by the `courseId` filter of 7.15: only the pairs of that course. */
+  courseId?: Types.ObjectId;
   statuses: AssignmentStatus[];
 };
+
+/**
+ * The scope as a `$match` fragment. Both fields sit on indexed keys of the two
+ * collections, so a filtered page costs the same reads as an unfiltered one.
+ */
+function scopeMatch(scope: PairScope): Record<string, unknown> {
+  const users = scope.users;
+
+  return {
+    ...(users
+      ? { userId: Array.isArray(users) ? { $in: users } : users }
+      : {}),
+    ...(scope.courseId ? { courseId: scope.courseId } : {}),
+  };
+}
 
 /* --- The three reads --------------------------------------------------- */
 
@@ -83,10 +105,10 @@ function aggregateCourseTotals(): Promise<CourseTotalRow[]> {
  * per pair and not one per completed lesson.
  */
 function aggregateCompletedPairs(
-  userId?: Types.ObjectId,
+  scope: PairScope,
 ): Promise<CompletedPairRow[]> {
   return LessonProgress.aggregate<CompletedPairRow>([
-    { $match: { status: "completed", ...(userId ? { userId } : {}) } },
+    { $match: { status: "completed", ...scopeMatch(scope) } },
     {
       $lookup: {
         from: Lesson.collection.name,
@@ -119,11 +141,10 @@ function aggregateCompletedPairs(
  * original one.
  */
 function aggregateAssignmentPairs(
-  statuses: AssignmentStatus[],
-  userId?: Types.ObjectId,
+  scope: PairScope,
 ): Promise<AssignmentPairRow[]> {
   return CourseAssignment.aggregate<AssignmentPairRow>([
-    { $match: { status: { $in: statuses }, ...(userId ? { userId } : {}) } },
+    { $match: { status: { $in: scope.statuses }, ...scopeMatch(scope) } },
     {
       $addFields: {
         revokedRank: { $cond: [{ $eq: ["$status", "revoked"] }, 1, 0] },
@@ -198,9 +219,9 @@ export async function loadPairProgress(
   scope: PairScope,
 ): Promise<PairProgress[]> {
   const [assignments, courseTotals, completedPairs] = await Promise.all([
-    aggregateAssignmentPairs(scope.statuses, scope.userId),
+    aggregateAssignmentPairs(scope),
     aggregateCourseTotals(),
-    aggregateCompletedPairs(scope.userId),
+    aggregateCompletedPairs(scope),
   ]);
 
   return assemblePairProgress(assignments, courseTotals, completedPairs);

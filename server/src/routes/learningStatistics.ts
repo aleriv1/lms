@@ -43,7 +43,7 @@ learningStatisticsRouter.get("/", async (request, response) => {
   // one function.
   const [pairs, totalLearningMinutes, completedLessonsCount, testResults] =
     await Promise.all([
-      loadPairProgress({ userId, statuses: PAIR_STAGES }),
+      loadPairProgress({ users: userId, statuses: PAIR_STAGES }),
       sumCompletedLessonMinutes(userId),
       // Every completed lesson, optional ones and courses with a revoked
       // assignment included: 7.8 asks for "the number of completed lessons"

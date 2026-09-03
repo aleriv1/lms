@@ -8,18 +8,24 @@ import {
   type LearnerCourseStat,
 } from "@lms/shared";
 import { Router } from "express";
-import { Types } from "mongoose";
+import { Types, type FilterQuery } from "mongoose";
 import { z } from "zod";
 
+import { buildStatisticsUserFilter } from "../admin/userQuery.js";
 import { AppError } from "../errors/AppError.js";
 import { sumCompletedLessonMinutes } from "../learning/courseProgress.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { requireRole } from "../middleware/requireRole.js";
 import { validate } from "../middleware/validate.js";
 import { Course } from "../models/Course.js";
+import { CourseAssignment } from "../models/CourseAssignment.js";
 import { LessonProgress } from "../models/LessonProgress.js";
 import { TestAttempt } from "../models/TestAttempt.js";
-import { toPublicUser, User } from "../models/User.js";
+import {
+  toPublicUser,
+  User,
+  type UserAttributes,
+} from "../models/User.js";
 import { loadAttemptSummaries } from "../statistics/attemptSummaries.js";
 import {
   averagePairProgress,
@@ -58,18 +64,24 @@ const ACTIVE_WINDOW_DAYS = 30;
  * a course leaves no trace of its own but never happens without a last lesson
  * or a last attempt, so it is already covered.
  */
-async function countActiveUsers(): Promise<number> {
+async function countActiveUsers(
+  userIds?: Types.ObjectId[],
+): Promise<number> {
   const since = new Date(
     Date.now() - ACTIVE_WINDOW_DAYS * 24 * 60 * 60 * 1000,
   );
 
+  // Narrowed to the filtered users for the reason the pairs are: the figure
+  // stands over the table and has to describe the people in it.
+  const scoped = userIds ? { userId: { $in: userIds } } : {};
+
   const [progressUsers, attemptUsers] = await Promise.all([
     LessonProgress.aggregate<{ _id: Types.ObjectId }>([
-      { $match: { updatedAt: { $gte: since } } },
+      { $match: { updatedAt: { $gte: since }, ...scoped } },
       { $group: { _id: "$userId" } },
     ]),
     TestAttempt.aggregate<{ _id: Types.ObjectId }>([
-      { $match: { submittedAt: { $gte: since } } },
+      { $match: { submittedAt: { $gte: since }, ...scoped } },
       { $group: { _id: "$userId" } },
     ]),
   ]);
@@ -111,36 +123,85 @@ function toLearnerCourseStat(
 }
 
 /**
- * Specification 7.15. `courseId`, `groupName` and `learningStatus` are part of
- * the contract and are **not** applied in stage 1 (specification 18.2, the
- * slice plan puts the filters in slice 12). `learningStatus` is derived from
- * progress, so filtering by it before pagination — the only way `meta.total`
- * can stay honest — means computing progress for every user and selecting in
- * Node, which is the thing this slice is reviewed for not doing. It arrives
- * with the pagination moved inside one pipeline.
+ * The set of users the page describes. Everything the answer reports — the
+ * rows, the summary above them and the per-course averages — is built from
+ * this one set, so the headline figures always describe the people in the
+ * table and not a wider crowd.
+ *
+ * `learningStatus` is the one filter of 7.15 that cannot be resolved here: it
+ * is derived from progress, and applying it before pagination means computing
+ * progress for every user and selecting in Node — the thing this slice is
+ * reviewed for not doing. It waits for the pagination to move inside one
+ * pipeline (slice 12). The other two are ordinary indexed reads and are
+ * applied.
+ */
+async function resolveScope(query: AdminStatisticsQuery): Promise<{
+  filter: FilterQuery<UserAttributes>;
+  courseId?: Types.ObjectId;
+  filtered: boolean;
+}> {
+  const courseId = query.courseId
+    ? new Types.ObjectId(query.courseId)
+    : undefined;
+
+  // An unassigned course gives an empty list, and an empty `$in` is the right
+  // answer for it — an empty page, not the whole collection.
+  const assignedUserIds = courseId
+    ? ((await CourseAssignment.distinct("userId", {
+        courseId,
+        status: { $in: PAIR_STAGES },
+      })) as Types.ObjectId[])
+    : undefined;
+
+  return {
+    filter: buildStatisticsUserFilter({
+      groupName: query.groupName,
+      assignedUserIds,
+    }),
+    courseId,
+    filtered: courseId !== undefined || Boolean(query.groupName),
+  };
+}
+
+/**
+ * Specification 7.15. Two of the three filters are applied; `learningStatus`
+ * is accepted by the contract and ignored until slice 12, for the reason
+ * `resolveScope` states.
  */
 adminStatisticsRouter.get(
   "/",
   validate(adminStatisticsQuerySchema, "query"),
   async (request, response) => {
     const query = request.query as unknown as AdminStatisticsQuery;
+    const scope = await resolveScope(query);
+
+    // Unfiltered, the table holds every account, of any role and any status:
+    // specification 4.3 allows an assignment for any role, and narrowing the
+    // table is the job of the filters rather than of a hidden rule. There is no
+    // sort parameter in the query schema, so the order is fixed — by the name
+    // the table of 7.15 starts with.
+    //
+    // The identifiers are read only when a filter is on. They bound the pairs
+    // to the same people the table shows; without a filter the pairs are read
+    // for everybody and no list is needed at all.
+    const scopedUserIds = scope.filtered
+      ? ((await User.distinct("_id", scope.filter)) as Types.ObjectId[])
+      : undefined;
 
     const [total, users, pairs, activeUsersCount] = await Promise.all([
-      User.countDocuments({}),
-      // Every account, any role and any status: specification 4.3 allows an
-      // assignment for any role, narrowing the table is the job of the filters
-      // that are not here yet, and only this composition makes
-      // `summary.usersCount` equal to `meta.total`. There is no sort parameter
-      // in the query schema, so the order is fixed — by the name the table of
-      // 7.15 starts with.
-      User.find({})
+      User.countDocuments(scope.filter),
+      User.find(scope.filter)
         .sort({ name: 1, _id: 1 })
         .skip((query.page - 1) * query.pageSize)
         .limit(query.pageSize),
       // One read for the whole answer: the rows of the page, the summary and
       // the per-course averages are all assembled from it.
-      loadPairProgress({ statuses: PAIR_STAGES }),
-      countActiveUsers(),
+      loadPairProgress({
+        statuses: PAIR_STAGES,
+        users: scopedUserIds,
+        courseId: scope.courseId,
+      }),
+      countActiveUsers(scopedUserIds),
     ]);
 
     const pairsByUser = groupPairsByUser(pairs);
@@ -209,7 +270,7 @@ adminStatisticsRouter.get(
     // row show up only for a course with no assignment in force.
     const [pairs, totalLearningMinutes, testResults] = await Promise.all([
       loadPairProgress({
-        userId: user._id,
+        users: user._id,
         statuses: PAIR_STAGES_WITH_HISTORY,
       }),
       sumCompletedLessonMinutes(user._id),

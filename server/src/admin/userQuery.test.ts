@@ -1,7 +1,12 @@
 import { adminUsersQuerySchema } from "@lms/shared";
+import { Types } from "mongoose";
 import { describe, expect, it } from "vitest";
 
-import { buildUserFilter, buildUserSort } from "./userQuery.js";
+import {
+  buildStatisticsUserFilter,
+  buildUserFilter,
+  buildUserSort,
+} from "./userQuery.js";
 
 const parse = (query: Record<string, unknown>) =>
   adminUsersQuerySchema.parse(query);
@@ -60,5 +65,41 @@ describe("admin user query helpers", () => {
         _id: -1,
       });
     }
+  });
+});
+
+describe("buildStatisticsUserFilter", () => {
+  it("asks for nothing when neither filter of 7.15 is set", () => {
+    expect(buildStatisticsUserFilter({})).toEqual({});
+  });
+
+  it("matches the group as a substring, as /admin/users does", () => {
+    const filter = buildStatisticsUserFilter({ groupName: "смена a" });
+
+    expect(filter.groupName).toBeInstanceOf(RegExp);
+    expect("Смена A-1").toMatch(filter.groupName as RegExp);
+  });
+
+  it("keeps a regular expression out of the group filter", () => {
+    const filter = buildStatisticsUserFilter({ groupName: "A." });
+
+    expect("AB").not.toMatch(filter.groupName as RegExp);
+    expect("A.1").toMatch(filter.groupName as RegExp);
+  });
+
+  it("narrows to the users a course is assigned to", () => {
+    const id = new Types.ObjectId();
+
+    expect(buildStatisticsUserFilter({ assignedUserIds: [id] })._id).toEqual({
+      $in: [id],
+    });
+  });
+
+  it("empties the page for a course nobody was assigned", () => {
+    // The distinction that matters: an empty list is a filter that matches
+    // nobody, not a missing filter that matches everybody.
+    expect(buildStatisticsUserFilter({ assignedUserIds: [] })._id).toEqual({
+      $in: [],
+    });
   });
 });
