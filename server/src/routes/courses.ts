@@ -19,6 +19,7 @@ import { courseTestsRouter } from "./courseTests.js";
 import { loadOwnedCourse } from "../courses/courseAccess.js";
 import { buildCourseDetail } from "../courses/courseDetail.js";
 import { buildCourseFilter, buildCourseSort } from "../courses/courseQuery.js";
+import { countLessonsPerCourse } from "../courses/lessonCounts.js";
 import { collectPublicationIssues } from "../courses/publishRules.js";
 import { AppError } from "../errors/AppError.js";
 import {
@@ -54,20 +55,6 @@ const captureCourseUpdateFields: RequestHandler = (request, response, next) => {
  */
 function countCourseLessons(courseId: Types.ObjectId): Promise<number> {
   return Lesson.countDocuments({ courseId }).exec();
-}
-
-/** One aggregation over the courses of the current page, not the collection. */
-async function countLessonsPerCourse(
-  courseIds: Types.ObjectId[],
-): Promise<Map<string, number>> {
-  const counts = await Lesson.aggregate<{ _id: Types.ObjectId; count: number }>(
-    [
-      { $match: { courseId: { $in: courseIds } } },
-      { $group: { _id: "$courseId", count: { $sum: 1 } } },
-    ],
-  );
-
-  return new Map(counts.map((entry) => [entry._id.toString(), entry.count]));
 }
 
 coursesRouter.use(requireAuth, requireRole("teacher", "admin"));

@@ -207,5 +207,13 @@ export const testAttemptSummarySchema = z.object({
   passed: z.boolean(),
   attemptNumber: z.number().int().min(1),
   submittedAt: isoDateTimeSchema,
+  /**
+   * ТЗ 4.4 требует показывать «последнюю и лучшую попытки». Обе метки живут на
+   * строке, а не в двух отдельных массивах: когда лучшая попытка и есть
+   * последняя, это одна строка с обоими признаками, и клиенту не приходится
+   * искать её в двух списках, чтобы не нарисовать дважды.
+   */
+  isBest: z.boolean(),
+  isLast: z.boolean(),
 });
 export type TestAttemptSummary = z.infer<typeof testAttemptSummarySchema>;

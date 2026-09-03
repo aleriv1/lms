@@ -48,10 +48,12 @@ import {
   requireAuth,
 } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
+import { averagePercent } from "../statistics/pairProgress.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson, type LessonDocument } from "../models/Lesson.js";
 import { LessonProgress } from "../models/LessonProgress.js";
 import { Test } from "../models/Test.js";
+import { learningStatisticsRouter } from "./learningStatistics.js";
 import { learningTestsRouter } from "./learningTests.js";
 
 /**
@@ -65,8 +67,10 @@ export const learningRouter = Router();
 learningRouter.use(requireAuth);
 
 // Taking a test lives in its own file: two handlers plus the scoring would have
-// made this one unreadable end to end.
+// made this one unreadable end to end. The statistics of specification 7.8 are
+// out for the same reason.
 learningRouter.use("/tests", learningTestsRouter);
+learningRouter.use("/me/statistics", learningStatisticsRouter);
 
 const courseParamsSchema = z.object({ courseId: objectIdSchema });
 const courseLessonParamsSchema = z.object({
@@ -188,14 +192,12 @@ learningRouter.get("/me", async (request, response) => {
   });
 
   // "The average progress over the assignments in force" (7.4): the same set
-  // the cards show, so the two numbers on the page cannot disagree.
-  const overallProgressPercent =
-    courses.length === 0
-      ? 0
-      : Math.round(
-          courses.reduce((sum, course) => sum + course.progressPercent, 0) /
-            courses.length,
-        );
+  // the cards show, so the two numbers on the page cannot disagree. The
+  // averaging itself is shared with the statistics of slice 09 — one rounding
+  // rule for the whole project.
+  const overallProgressPercent = averagePercent(
+    courses.map((course) => course.progressPercent),
+  );
 
   response.json(
     learningOverviewSchema.parse({
