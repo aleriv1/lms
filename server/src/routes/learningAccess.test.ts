@@ -5,6 +5,7 @@ import {
 } from "@lms/shared";
 import { Types } from "mongoose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { isAssignmentEffective } from "../learning/accessRules.js";
 import { Course } from "../models/Course.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson } from "../models/Lesson.js";
@@ -24,6 +25,38 @@ afterAll(disconnectTestDatabase);
 beforeEach(clearDatabase);
 
 describe("learning access over HTTP", () => {
+  it("refuses a revoked assignment in both the access rule and HTTP", async () => {
+    const teacher = await createUser({ role: "teacher" });
+    const student = await createUser();
+    const course = await Course.create({
+      title: "Курс с отозванным назначением",
+      category: "Обучение",
+      audience: "general",
+      shortDescription: "Проверка прекращения доступа после отзыва",
+      authorId: teacher._id,
+      status: "published",
+    });
+    const assignment = await CourseAssignment.create({
+      userId: student._id,
+      courseId: course._id,
+      assignedBy: teacher._id,
+    });
+    const agent = await signIn(student.email, TEST_PASSWORD);
+    const path = `/api/learning/courses/${course._id}`;
+    await agent.get(path).expect(200);
+    assignment.status = "revoked";
+    assignment.revokedAt = new Date();
+    await assignment.save();
+
+    const refused = await agent.get(path).expect(403);
+    expect(apiErrorSchema.parse(refused.body).code).toBe("course_not_assigned");
+    expect(await CourseAssignment.findById(assignment._id)).toMatchObject({
+      status: "revoked",
+    });
+    // The database query also filters revoked rows, masking a broken rule.
+    expect(isAssignmentEffective("revoked")).toBe(false);
+  });
+
   it("refuses unassigned and nonexistent courses identically", async () => {
     const teacher = await createUser({ role: "teacher" });
     const student = await createUser();

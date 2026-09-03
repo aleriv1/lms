@@ -23,6 +23,82 @@ afterAll(disconnectTestDatabase);
 beforeEach(clearDatabase);
 
 describe("learner tests over HTTP", () => {
+  it("scores and stores multiple answers only for an exact selected set", async () => {
+    const teacher = await createUser({ role: "teacher" });
+    const student = await createUser();
+    const course = await Course.create({
+      title: "Курс с несколькими ответами",
+      category: "Обучение",
+      audience: "general",
+      shortDescription: "Проверка точного совпадения выбранных вариантов",
+      authorId: teacher._id,
+      status: "published",
+    });
+    await CourseAssignment.create({
+      userId: student._id,
+      courseId: course._id,
+      assignedBy: teacher._id,
+    });
+    const questionId = new Types.ObjectId();
+    const firstId = new Types.ObjectId();
+    const secondId = new Types.ObjectId();
+    const wrongId = new Types.ObjectId();
+    const test = await Test.create({
+      courseId: course._id,
+      title: "Точный набор ответов",
+      passingScore: 70,
+      questions: [
+        {
+          _id: questionId,
+          text: "Выберите оба правильных ответа",
+          type: "multiple",
+          order: 1,
+          options: [
+            { _id: firstId, text: "Первый", isCorrect: true },
+            { _id: secondId, text: "Второй", isCorrect: true },
+            { _id: wrongId, text: "Лишний", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    const agent = await signIn(student.email, TEST_PASSWORD);
+    const cases = [
+      { selected: [firstId], score: 0, passed: false, correctCount: 0 },
+      {
+        selected: [firstId, secondId, wrongId],
+        score: 0,
+        passed: false,
+        correctCount: 0,
+      },
+      {
+        selected: [secondId, firstId],
+        score: 100,
+        passed: true,
+        correctCount: 1,
+      },
+    ];
+    for (const { selected, ...expected } of cases) {
+      const answers = [
+        {
+          questionId: questionId.toString(),
+          optionIds: selected.map((id) => id.toString()),
+        },
+      ];
+      const response = await agent
+        .post(`/api/learning/tests/${test._id}/attempts`)
+        .send({ answers })
+        .expect(201);
+      const result = attemptResultSchema.parse(response.body);
+      expect(result).toMatchObject({ ...expected, totalCount: 1 });
+      expect(await TestAttempt.findById(result.id)).toMatchObject({
+        ...expected,
+        totalCount: 1,
+        answers,
+      });
+    }
+    expect(await TestAttempt.countDocuments({ testId: test._id })).toBe(3);
+  });
+
   it("hides correct options and stores two separately numbered attempts with snapshots", async () => {
     const teacher = await createUser({ role: "teacher" });
     const student = await createUser();
