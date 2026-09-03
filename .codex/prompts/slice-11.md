@@ -38,8 +38,12 @@ over the schemas of `shared/`.
   specification 13 is **already covered** by these. Do not rewrite them, do not
   duplicate them; name them in the report as the coverage of that line.
 
-If a handler disagrees with this prompt, **stop, write what you found to
-`.codex/reports/slice-11.md`, and hand back without writing code.**
+Stop and hand back **only** if something structural is missing — a route, a
+model field or an export this prompt relies on does not exist. A different
+status code, a different `code` string or a different message is **not** a
+reason to stop: record the handler's answer in the test and list it under
+«Расхождение с ожиданием». The rule below says the same thing; where the two
+readings differ, this one wins.
 
 ## The rule that governs this whole slice
 
@@ -176,7 +180,7 @@ two required lessons makes `GET /api/learning/courses/:courseId` report 50 —
 computed by the server, with the request body carrying no number.
 
 **`learningTests.test.ts`** — submitting and storing (specification 4.4). A
-correct submission answers 200 with `passed: true` and the score the scoring
+correct submission answers **201** with `passed: true` and the score the scoring
 rule gives, and a `TestAttempt` row exists carrying `attemptNumber: 1` and a
 filled `questionsSnapshot`. A second submission stores `attemptNumber: 2` and
 leaves the first row in place. The learner's `GET /api/learning/tests/:testId`
