@@ -72,10 +72,18 @@ administrator role — **a teacher is refused exactly as a learner is**
 | `GET /learning/me/statistics` | — | `200` + `LearnerStatistics` |
 
 Refusals: `401` (handled globally, do not write a case for it), `403 forbidden`
-on the three administrative routes for any other role, `404 not_found` for an
-unknown user id, `422 validation_error` for an unparseable id or a `pageSize`
-outside `PAGE_SIZES`. The last one is reachable only by a hand-typed URL, and
-`readStatisticsQuery` (decision 3) has to make it unreachable from the UI.
+on the three administrative routes for any other role, `404 not_found` for a
+user id that is unknown **and** for one that cannot be an identifier at all,
+`422 validation_error` for a `pageSize` outside `PAGE_SIZES`.
+
+The two refusals are split by where the value came from, and the rule is the
+project's, stated in `server/src/middleware/validate.ts`: a body or a query is
+something the caller filled in, so it fails as `422` with the offending fields;
+a path parameter is not a filled-in field, so a malformed id addresses nothing
+and gets the same `404` a well-formed id for a missing user gets. **Do not stop
+over this** — render both bad ids as the same not-found state (decision 11).
+The `422` is reachable only by a hand-typed URL, and `readStatisticsQuery`
+(decision 3) has to make it unreachable from the UI.
 
 ## Words that repeat with different meanings
 
