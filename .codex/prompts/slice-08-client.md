@@ -283,8 +283,18 @@ change: the reducer is already registered and no new primitive is added.
 - A history of attempts, a review of which answers were wrong, a per-question
   verdict. The review of answers is Stage 2 (specification 18.2), the history
   arrives with the statistics of slice 09.
-- A timer, an attempt limit, a warning about leaving the page. The
-  specification has none of them; 4.4 expressly leaves attempts unlimited.
+- A timer or an attempt limit. The specification has neither, and 4.4 expressly
+  leaves attempts unlimited.
+- **A warning when the learner leaves the page with answers unsent — and this
+  one the specification does require.** 5.3 asks for it of every form, and no
+  form in this project has it: `useBlocker` needs the data router and `App.tsx`
+  still mounts `<BrowserRouter>`, so the plan migrates the router once and
+  covers all six forms together (`.claude/slice-plan.md`, срез 13). Building it
+  here would mean either migrating the router inside a slice about taking a
+  test, or shipping a `beforeunload` that catches a closed tab and misses every
+  in-app link — one form out of six, done half way. It stays out on purpose:
+  the debt is the plan's and it is already written down, not a hole this prompt
+  is opening.
 - Shuffling questions or options. The server sends them in order and the
   attempt's snapshot has to match what the learner saw.
 - The frontend test of a protected route, the second half of specification 13 —

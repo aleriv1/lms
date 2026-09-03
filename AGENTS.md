@@ -13,8 +13,13 @@ restate the specification; it states what must never drift.
 4. `.codex/prompts/slice-NN.md` — the current slice.
 
 A prompt never overrides the specification. If a prompt and the specification
-disagree, stop and report the conflict in the self-report instead of choosing
-one. Never invent a requirement that appears in none of these files.
+disagree, report the conflict in the self-report instead of choosing one — and
+stop only as far as the conflict reaches. A disagreement that decides one
+control or one line of a prompt blocks that control, not the slice: build
+everything the conflict does not touch, leave that part out, and say in the
+report what you left and why. A whole slice stopped over a contradiction
+confined to a corner of it costs a session and hands back nothing anyone can
+judge. Never invent a requirement that appears in none of these files.
 
 `legend/` and `tz-example-(the-blog).md` are not requirements. Do not read them
 for behaviour.
