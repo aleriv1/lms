@@ -1,4 +1,8 @@
-import type { AssignmentStatus, CourseProgressStat } from "@lms/shared";
+import type {
+  AssignmentStatus,
+  CourseProgressStat,
+  LearningStatus,
+} from "@lms/shared";
 import type { Types } from "mongoose";
 
 import { computeProgressPercent } from "../learning/lessonStates.js";
@@ -37,6 +41,14 @@ export type PairProgress = {
   progressPercent: number;
 };
 
+export function learningStatusOf(pairs: PairProgress[]): LearningStatus {
+  if (pairs.length === 0) return "not_started";
+  if (pairs.every((pair) => pair.assignmentStatus === "completed"))
+    return "completed";
+  if (pairs.every((pair) => pair.completed === 0)) return "not_started";
+  return "in_progress";
+}
+
 export type PairScope = {
   /**
    * Omitted — every learner. One identifier — a learner's own two screens. A
@@ -58,9 +70,7 @@ function scopeMatch(scope: PairScope): Record<string, unknown> {
   const users = scope.users;
 
   return {
-    ...(users
-      ? { userId: Array.isArray(users) ? { $in: users } : users }
-      : {}),
+    ...(users ? { userId: Array.isArray(users) ? { $in: users } : users } : {}),
     ...(scope.courseId ? { courseId: scope.courseId } : {}),
   };
 }

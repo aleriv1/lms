@@ -13,6 +13,8 @@ import { Course, type CourseDocument } from "../models/Course.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson, type LessonDocument } from "../models/Lesson.js";
 import { LessonProgress } from "../models/LessonProgress.js";
+import { ActivityEvent } from "../models/ActivityEvent.js";
+import { recordActivity } from "../learning/activityLog.js";
 import { Test, type TestDocument } from "../models/Test.js";
 import { TestAttempt } from "../models/TestAttempt.js";
 import { User, type UserDocument } from "../models/User.js";
@@ -435,8 +437,9 @@ try {
 
   if (reset) {
     console.info(
-      `seed:reset: очищается база ${mongoose.connection.name} (семь коллекций демоданных)`,
+      `seed:reset: очищается база ${mongoose.connection.name} (восемь коллекций демоданных)`,
     );
+    await ActivityEvent.deleteMany({});
     await TestAttempt.deleteMany({});
     await LessonProgress.deleteMany({});
     await CourseAssignment.deleteMany({});
@@ -552,7 +555,7 @@ try {
       courseId: course._id,
     });
     if (!existing) {
-      await CourseAssignment.create({
+      const assignment = await CourseAssignment.create({
         userId: user._id,
         courseId: course._id,
         assignedBy: admin._id,
@@ -564,6 +567,15 @@ try {
             ? daysAgo(demo.firstCompletionDaysAgo - demo.completedLessons + 1)
             : null,
       });
+      if (assignment.completedAt) {
+        await recordActivity({
+          userId: user._id,
+          type: "course_completed",
+          course: { id: course._id, title: course.title },
+          lesson: null,
+          createdAt: assignment.completedAt,
+        });
+      }
     }
     logEntity(
       `${demo.email} / ${course.title} / assignment`,
@@ -596,6 +608,22 @@ try {
         // Activity readers use updatedAt: keep the historical action time
         // rather than replacing it with the time the seed was run.
         await progress.save({ timestamps: false });
+        await recordActivity({
+          userId: user._id,
+          type: "lesson_started",
+          course: { id: course._id, title: course.title },
+          lesson: { id: lesson._id, title: lesson.title },
+          createdAt: progress.startedAt,
+        });
+        if (progress.completedAt) {
+          await recordActivity({
+            userId: user._id,
+            type: "lesson_completed",
+            course: { id: course._id, title: course.title },
+            lesson: { id: lesson._id, title: lesson.title },
+            createdAt: progress.completedAt,
+          });
+        }
       }
       logEntity(
         `${demo.email} / ${lesson.title} / progress`,
@@ -616,6 +644,14 @@ try {
     });
     if (!existing) {
       const questionsSnapshot = buildQuestionsSnapshot(test.questions);
+      const course = [...courses.values()].find((item) =>
+        item._id.equals(test.courseId),
+      );
+      const lesson = test.lessonId
+        ? [...lessons.values()].find((item) => item._id.equals(test.lessonId))
+        : null;
+      if (!course || lesson === undefined)
+        throw new Error(`Demo activity parent missing: ${demo.test}`);
       const answers = questionsSnapshot.map((question) => ({
         questionId: question.questionId,
         optionIds: question.options
@@ -645,6 +681,13 @@ try {
         updatedAt: submittedAt,
       });
       await attempt.save({ timestamps: false });
+      await recordActivity({
+        userId: user._id,
+        type: "test_submitted",
+        course: { id: course._id, title: course.title },
+        lesson: lesson ? { id: lesson._id, title: lesson.title } : null,
+        createdAt: attempt.submittedAt,
+      });
     }
     logEntity(
       `${demo.email} / ${test.title} / attempt ${demo.attemptNumber}`,

@@ -21,12 +21,9 @@ import { Course } from "../models/Course.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
 import { LessonProgress } from "../models/LessonProgress.js";
 import { TestAttempt } from "../models/TestAttempt.js";
-import {
-  toPublicUser,
-  User,
-  type UserAttributes,
-} from "../models/User.js";
+import { toPublicUser, User, type UserAttributes } from "../models/User.js";
 import { loadAttemptSummaries } from "../statistics/attemptSummaries.js";
+import { loadRecentActivity } from "../statistics/activityFeed.js";
 import {
   averagePairProgress,
   averageProgressOverUsers,
@@ -34,6 +31,7 @@ import {
   buildCourseProgressStats,
   countPairsWithStatus,
   groupPairsByUser,
+  learningStatusOf,
   loadPairProgress,
   PAIR_STAGES,
   PAIR_STAGES_WITH_HISTORY,
@@ -64,12 +62,8 @@ const ACTIVE_WINDOW_DAYS = 30;
  * a course leaves no trace of its own but never happens without a last lesson
  * or a last attempt, so it is already covered.
  */
-async function countActiveUsers(
-  userIds?: Types.ObjectId[],
-): Promise<number> {
-  const since = new Date(
-    Date.now() - ACTIVE_WINDOW_DAYS * 24 * 60 * 60 * 1000,
-  );
+async function countActiveUsers(userIds?: Types.ObjectId[]): Promise<number> {
+  const since = new Date(Date.now() - ACTIVE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
   // Narrowed to the filtered users for the reason the pairs are: the figure
   // stands over the table and has to describe the people in it.
@@ -128,12 +122,8 @@ function toLearnerCourseStat(
  * this one set, so the headline figures always describe the people in the
  * table and not a wider crowd.
  *
- * `learningStatus` is the one filter of 7.15 that cannot be resolved here: it
- * is derived from progress, and applying it before pagination means computing
- * progress for every user and selecting in Node — the thing this slice is
- * reviewed for not doing. It waits for the pagination to move inside one
- * pipeline (slice 12). The other two are ordinary indexed reads and are
- * applied.
+ * Course and group define the initial scope. The handler then applies
+ * `learningStatus` using the pairs already needed for the summary.
  */
 async function resolveScope(query: AdminStatisticsQuery): Promise<{
   filter: FilterQuery<UserAttributes>;
@@ -164,9 +154,8 @@ async function resolveScope(query: AdminStatisticsQuery): Promise<{
 }
 
 /**
- * Specification 7.15. Two of the three filters are applied; `learningStatus`
- * is accepted by the contract and ignored until slice 12, for the reason
- * `resolveScope` states.
+ * Specification 7.15. All three filters narrow the whole answer before
+ * MongoDB counts and paginates the matching users.
  */
 adminStatisticsRouter.get(
   "/",
@@ -188,20 +177,38 @@ adminStatisticsRouter.get(
       ? ((await User.distinct("_id", scope.filter)) as Types.ObjectId[])
       : undefined;
 
-    const [total, users, pairs, activeUsersCount] = await Promise.all([
-      User.countDocuments(scope.filter),
-      User.find(scope.filter)
+    const allPairs = await loadPairProgress({
+      statuses: PAIR_STAGES,
+      users: scopedUserIds,
+      courseId: scope.courseId,
+    });
+    let filter = scope.filter;
+    let pairs = allPairs;
+    let activeUserIds = scopedUserIds;
+
+    if (query.learningStatus) {
+      const userIds =
+        scopedUserIds ??
+        ((await User.distinct("_id", scope.filter)) as Types.ObjectId[]);
+      const grouped = groupPairsByUser(allPairs);
+      const matchedIds = userIds.filter(
+        (id) =>
+          learningStatusOf(grouped.get(id.toString()) ?? []) ===
+          query.learningStatus,
+      );
+      const matched = new Set(matchedIds.map((id) => id.toString()));
+      filter = { ...scope.filter, _id: { $in: matchedIds } };
+      pairs = allPairs.filter((pair) => matched.has(pair.userId));
+      activeUserIds = matchedIds;
+    }
+
+    const [total, users, activeUsersCount] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter)
         .sort({ name: 1, _id: 1 })
         .skip((query.page - 1) * query.pageSize)
         .limit(query.pageSize),
-      // One read for the whole answer: the rows of the page, the summary and
-      // the per-course averages are all assembled from it.
-      loadPairProgress({
-        statuses: PAIR_STAGES,
-        users: scopedUserIds,
-        courseId: scope.courseId,
-      }),
-      countActiveUsers(scopedUserIds),
+      countActiveUsers(activeUserIds),
     ]);
 
     const pairsByUser = groupPairsByUser(pairs);
@@ -268,22 +275,22 @@ adminStatisticsRouter.get(
     // assigned courses", and a course taken away should not fall out of the
     // administrator's history. `revokedRank` in the pipeline makes a revoked
     // row show up only for a course with no assignment in force.
-    const [pairs, totalLearningMinutes, testResults] = await Promise.all([
-      loadPairProgress({
-        users: user._id,
-        statuses: PAIR_STAGES_WITH_HISTORY,
-      }),
-      sumCompletedLessonMinutes(user._id),
-      loadAttemptSummaries(user._id),
-    ]);
+    const [pairs, totalLearningMinutes, testResults, recentActivity] =
+      await Promise.all([
+        loadPairProgress({
+          users: user._id,
+          statuses: PAIR_STAGES_WITH_HISTORY,
+        }),
+        sumCompletedLessonMinutes(user._id),
+        loadAttemptSummaries(user._id),
+        loadRecentActivity(user._id),
+      ]);
 
     // The figures cover the assignments in force only, so they agree with what
     // the learner sees on their own screens. A revoked pair shows its current
     // progress — no snapshot of progress at the moment of revocation exists
     // anywhere (specification 8.6) — and takes part in no average.
-    const inForce = pairs.filter(
-      (pair) => pair.assignmentStatus !== "revoked",
-    );
+    const inForce = pairs.filter((pair) => pair.assignmentStatus !== "revoked");
 
     const courseTitles = await loadCourseTitles(
       pairs.map((pair) => pair.courseId),
@@ -295,17 +302,12 @@ adminStatisticsRouter.get(
         averageProgressPercent: averagePairProgress(inForce),
         completedCoursesCount: countPairsWithStatus(inForce, "completed"),
         totalLearningMinutes,
-        courses: [...pairs]
-          .sort(byAssignedAtDesc)
-          .flatMap((pair) => {
-            const title = courseTitles.get(pair.courseId);
-            return title === undefined
-              ? []
-              : [toLearnerCourseStat(pair, title)];
-          }),
+        courses: [...pairs].sort(byAssignedAtDesc).flatMap((pair) => {
+          const title = courseTitles.get(pair.courseId);
+          return title === undefined ? [] : [toLearnerCourseStat(pair, title)];
+        }),
         testResults,
-        // `ActivityEvent` does not exist yet (specification 8.8); slice 12.
-        recentActivity: [],
+        recentActivity,
       }),
     );
   },

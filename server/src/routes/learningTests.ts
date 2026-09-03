@@ -22,6 +22,8 @@ import {
   loadStudiableAssignedCourse,
 } from "../learning/assignedCourse.js";
 import { settleCourseCompletion } from "../learning/courseCompletion.js";
+import { recordActivity } from "../learning/activityLog.js";
+import type { CourseDocumentWithAuthor } from "../models/Course.js";
 import { loadCourseLearningState } from "../learning/courseProgress.js";
 import { completeLesson } from "../learning/lessonCompletion.js";
 import { getAuthenticatedUser } from "../middleware/requireAuth.js";
@@ -47,7 +49,7 @@ const testParamsSchema = z.object({ testId: objectIdSchema });
 
 type LearnerTestAccess = {
   test: TestDocument;
-  courseId: Types.ObjectId;
+  course: CourseDocumentWithAuthor;
   assignment: CourseAssignmentDocument;
   /** The lesson this test closes, or `null` for a final test of the course. */
   lesson: LessonDocument | null;
@@ -88,7 +90,7 @@ async function loadLearnerTest(
       : await loadStudiableAssignedCourse(test.courseId, user.id);
 
   if (!test.lessonId) {
-    return { test, courseId: course._id, assignment, lesson: null };
+    return { test, course, assignment, lesson: null };
   }
 
   const lesson = await Lesson.findOne({
@@ -113,7 +115,7 @@ async function loadLearnerTest(
     throw lessonLockedError();
   }
 
-  return { test, courseId: course._id, assignment, lesson };
+  return { test, course, assignment, lesson };
 }
 
 /** Specification 4.4, 10.3: the learner's view carries no `isCorrect`. */
@@ -175,7 +177,9 @@ type NewAttempt = Omit<
  * the form while the request is in flight. The server promises one thing: two
  * attempts never share a number.
  */
-async function createAttempt(attempt: NewAttempt): Promise<TestAttemptDocument> {
+async function createAttempt(
+  attempt: NewAttempt,
+): Promise<TestAttemptDocument> {
   for (let retry = 0; retry < ATTEMPT_NUMBER_RETRIES; retry += 1) {
     const attemptNumber =
       (await TestAttempt.countDocuments({
@@ -211,7 +215,7 @@ learningTestsRouter.post(
     const user = getAuthenticatedUser(request);
     const userId = new Types.ObjectId(user.id);
     const body = request.body as SubmitAttemptBody;
-    const { test, courseId, assignment, lesson } = await loadLearnerTest(
+    const { test, course, assignment, lesson } = await loadLearnerTest(
       request.params.testId as string,
       user,
       "submit",
@@ -229,7 +233,7 @@ learningTestsRouter.post(
     const attempt = await createAttempt({
       userId,
       testId: test._id,
-      courseId,
+      courseId: course._id,
       lessonId: lesson ? lesson._id : null,
       testVersion: test.version,
       questionsSnapshot,
@@ -239,6 +243,12 @@ learningTestsRouter.post(
       score: graded.score,
       passed: graded.passed,
       submittedAt: new Date(),
+    });
+    await recordActivity({
+      userId,
+      type: "test_submitted",
+      course: { id: course._id, title: course.title },
+      lesson: lesson ? { id: lesson._id, title: lesson.title } : null,
     });
 
     // Only a pass changes anything. A failed attempt is recorded and leaves the
@@ -255,15 +265,15 @@ learningTestsRouter.post(
       // Reached after any pass, not only a final test: a lesson closed by its
       // own test may have been the last mandatory one, and then the course is
       // finished by this very request.
-      const state = await loadCourseLearningState(userId, courseId);
-      await settleCourseCompletion(userId, courseId, assignment, state.required);
+      const state = await loadCourseLearningState(userId, course._id);
+      await settleCourseCompletion(userId, course, assignment, state.required);
     }
 
     response.status(201).json(
       attemptResultSchema.parse({
         id: attempt._id.toString(),
         testId: test._id.toString(),
-        courseId: courseId.toString(),
+        courseId: course._id.toString(),
         lessonId: lesson ? lesson._id.toString() : null,
         score: graded.score,
         passingScore: test.passingScore,

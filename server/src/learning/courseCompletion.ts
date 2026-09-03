@@ -1,6 +1,7 @@
 import type { Types } from "mongoose";
 
 import { hasPassedTest } from "./attemptStats.js";
+import { recordActivity } from "./activityLog.js";
 import { isCourseCompleted, type RequiredLessonCount } from "./lessonStates.js";
 import type { CourseAssignmentDocument } from "../models/CourseAssignment.js";
 import { Test } from "../models/Test.js";
@@ -40,19 +41,25 @@ export async function findFinalTestState(
  */
 export async function settleCourseCompletion(
   userId: Types.ObjectId,
-  courseId: Types.ObjectId,
+  course: { _id: Types.ObjectId; title: string },
   assignment: CourseAssignmentDocument,
   required: RequiredLessonCount,
 ): Promise<boolean> {
   const courseCompleted = isCourseCompleted(
     required,
-    await findFinalTestState(userId, courseId),
+    await findFinalTestState(userId, course._id),
   );
 
   if (courseCompleted && assignment.status !== "completed") {
     assignment.status = "completed";
     assignment.completedAt = new Date();
     await assignment.save();
+    await recordActivity({
+      userId,
+      type: "course_completed",
+      course: { id: course._id, title: course.title },
+      lesson: null,
+    });
   }
 
   return courseCompleted;

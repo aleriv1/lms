@@ -2,6 +2,7 @@ import { apiErrorSchema, sessionResponseSchema } from "@lms/shared";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { User } from "../models/User.js";
+import { verifyPassword } from "../auth/password.js";
 import {
   api,
   clearDatabase,
@@ -99,6 +100,7 @@ describe("authentication over HTTP", () => {
     const stored = await User.findById(user.id).select("+passwordHash");
     expect(stored?.passwordHash).toBeTruthy();
     expect(stored?.passwordHash).not.toBe(TEST_PASSWORD);
+    expect(await verifyPassword(TEST_PASSWORD, stored?.passwordHash ?? "")).toBe(true);
     const me = await agent.get("/api/auth/me").expect(200);
     expect(sessionResponseSchema.parse(me.body).user.id).toBe(user.id);
     for (const item of [response, me])

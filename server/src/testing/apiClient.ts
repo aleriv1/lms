@@ -11,6 +11,7 @@ import { app } from "../app.js";
 import { hashPassword } from "../auth/password.js";
 import { connectToDatabase } from "../db/connect.js";
 import { Course } from "../models/Course.js";
+import { ActivityEvent } from "../models/ActivityEvent.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson } from "../models/Lesson.js";
 import { LessonProgress } from "../models/LessonProgress.js";
@@ -71,6 +72,7 @@ export async function connectTestDatabase(): Promise<void> {
       CourseAssignment,
       LessonProgress,
       TestAttempt,
+      ActivityEvent,
     ]) {
       await model.createCollection();
       await model.createIndexes();
@@ -109,6 +111,7 @@ export async function clearDatabase(): Promise<void> {
     CourseAssignment.deleteMany({}),
     LessonProgress.deleteMany({}),
     TestAttempt.deleteMany({}),
+    ActivityEvent.deleteMany({}),
   ]);
 }
 

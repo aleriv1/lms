@@ -1,7 +1,4 @@
-import {
-  learnerStatisticsSchema,
-  type LearnerCourseStat,
-} from "@lms/shared";
+import { learnerStatisticsSchema, type LearnerCourseStat } from "@lms/shared";
 import { Router } from "express";
 import { Types } from "mongoose";
 
@@ -10,6 +7,10 @@ import { getAuthenticatedUser } from "../middleware/requireAuth.js";
 import { Course } from "../models/Course.js";
 import { LessonProgress } from "../models/LessonProgress.js";
 import { loadAttemptSummaries } from "../statistics/attemptSummaries.js";
+import {
+  loadActivityWeeks,
+  loadRecentActivity,
+} from "../statistics/activityFeed.js";
 import {
   averagePairProgress,
   byAssignedAtDesc,
@@ -41,16 +42,24 @@ learningStatisticsRouter.get("/", async (request, response) => {
   // "the active and the finished courses". `/learning/me` is built from the
   // same set, so the overall progress here and there is one number computed by
   // one function.
-  const [pairs, totalLearningMinutes, completedLessonsCount, testResults] =
-    await Promise.all([
-      loadPairProgress({ users: userId, statuses: PAIR_STAGES }),
-      sumCompletedLessonMinutes(userId),
-      // Every completed lesson, optional ones and courses with a revoked
-      // assignment included: 7.8 asks for "the number of completed lessons"
-      // without a qualifier, the same choice `totalLearningMinutes` makes.
-      LessonProgress.countDocuments({ userId, status: "completed" }),
-      loadAttemptSummaries(userId),
-    ]);
+  const [
+    pairs,
+    totalLearningMinutes,
+    completedLessonsCount,
+    testResults,
+    activityWeeks,
+    recentActivity,
+  ] = await Promise.all([
+    loadPairProgress({ users: userId, statuses: PAIR_STAGES }),
+    sumCompletedLessonMinutes(userId),
+    // Every completed lesson, optional ones and courses with a revoked
+    // assignment included: 7.8 asks for "the number of completed lessons"
+    // without a qualifier, the same choice `totalLearningMinutes` makes.
+    LessonProgress.countDocuments({ userId, status: "completed" }),
+    loadAttemptSummaries(userId),
+    loadActivityWeeks(userId),
+    loadRecentActivity(userId),
+  ]);
 
   const courses = await Course.find({
     _id: { $in: pairs.map((pair) => pair.courseId) },
@@ -85,9 +94,8 @@ learningStatisticsRouter.get("/", async (request, response) => {
       overallProgressPercent: averagePairProgress(pairs),
       courses: courseStats,
       testResults,
-      // Both are filled from `ActivityEvent` in slice 12 (specification 18.2).
-      activityWeeks: [],
-      recentActivity: [],
+      activityWeeks,
+      recentActivity,
     }),
   );
 });

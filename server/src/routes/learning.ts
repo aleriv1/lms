@@ -38,6 +38,7 @@ import {
   sumCompletedLessonMinutes,
 } from "../learning/courseProgress.js";
 import { completeLesson } from "../learning/lessonCompletion.js";
+import { recordActivity } from "../learning/activityLog.js";
 import {
   computeProgressPercent,
   findAdjacentLessons,
@@ -365,7 +366,10 @@ learningRouter.post(
     const user = getAuthenticatedUser(request);
     const userId = new Types.ObjectId(user.id);
     const lesson = await loadPublishedLesson(request.params.lessonId as string);
-    await loadStudiableAssignedCourse(lesson.courseId, user.id);
+    const { course } = await loadStudiableAssignedCourse(
+      lesson.courseId,
+      user.id,
+    );
 
     const state = await loadCourseLearningState(userId, lesson.courseId);
     const lessonState = state.stateByLessonId.get(lesson._id.toString());
@@ -384,6 +388,12 @@ learningRouter.post(
           lessonId: lesson._id,
           status: "in_progress",
           startedAt: new Date(),
+        });
+        await recordActivity({
+          userId,
+          type: "lesson_started",
+          course: { id: course._id, title: course.title },
+          lesson: { id: lesson._id, title: lesson.title },
         });
       } catch (error) {
         // Two simultaneous clicks: the unique index closes the window the check
@@ -455,12 +465,18 @@ learningRouter.post(
       }
 
       await completeLesson(userId, lesson);
+      await recordActivity({
+        userId,
+        type: "lesson_completed",
+        course: { id: course._id, title: course.title },
+        lesson: { id: lesson._id, title: lesson.title },
+      });
     }
 
     const updated = await loadCourseLearningState(userId, course._id);
     const courseCompleted = await settleCourseCompletion(
       userId,
-      course._id,
+      course,
       assignment,
       updated.required,
     );
