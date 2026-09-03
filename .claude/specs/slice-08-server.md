@@ -533,8 +533,13 @@ export async function settleCourseCompletion(
    `course_not_assigned`.
 9. Тест урока черновикового курса «Вводный инструктаж» — 403
    `course_not_assigned` (курс не назначен), а не 404.
-10. `GET /learning/courses/:courseId` показывает у теста `attemptsCount`,
-    `bestScore` и `passed`, а не нули.
+10. Показатели теста урока — `attemptsCount`, `bestScore`, `passed` — приходят
+    в `GET /learning/courses/:courseId/lessons/:lessonId`, в `requiredTest`, а
+    не нулями среза 07. В ответе курса у строки урока их нет и по контракту
+    быть не может: `learningLessonItemSchema` несёт только `hasTest`
+    (ТЗ 7.5 — название, номер, состояние). Показатели **итогового** теста —
+    да, в `GET /learning/courses/:courseId`, в `finalTest`.
+    *Исправлено ревью: пункт требовал полей в ответе курса.*
 
 ## 12. Решения, которых ТЗ не задаёт
 
