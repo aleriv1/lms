@@ -100,7 +100,7 @@ describe("statistics read thunks", () => {
     const params = new URL(path ?? "", "https://example.test").searchParams;
     expect(params.get("courseId")).toBe("bbbbbbbbbbbbbbbbbbbbbbbb");
     expect(params.get("groupName")).toBe("Смена А");
-    expect(params.has("learningStatus")).toBe(false);
+    expect(params.get("learningStatus")).toBe("completed");
     expect(store.getState().statistics.list.data).toEqual(response);
   });
 

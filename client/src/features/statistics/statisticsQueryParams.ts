@@ -3,7 +3,13 @@ import {
   type AdminStatisticsQuery,
 } from "@lms/shared";
 
-const QUERY_KEYS = ["page", "pageSize", "courseId", "groupName"] as const;
+const QUERY_KEYS = [
+  "page",
+  "pageSize",
+  "courseId",
+  "groupName",
+  "learningStatus",
+] as const;
 
 /** Hand-typed invalid values fall back to the shared schema defaults. */
 export function readStatisticsQuery(

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { EmptyState, ErrorState, Loader } from "../../components/ui";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchMyStatistics } from "./statisticsApi";
+import { ActivityChart } from "./ActivityChart";
 import { CourseStatisticsTable, TestResultsTable } from "./StatisticsTables";
 import styles from "./Statistics.module.css";
 
@@ -60,9 +61,7 @@ export function ProfileStatistics() {
           </section>
           <section>
             <h3>Активность за последние четыре недели</h3>
-            {me.data.activityWeeks.length === 0 && (
-              <EmptyState title="Данных об активности пока нет" />
-            )}
+            <ActivityChart weeks={me.data.activityWeeks} />
           </section>
         </>
       )}

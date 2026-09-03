@@ -1,9 +1,11 @@
 import {
   GROUP_NAME_MAX_LENGTH,
+  LEARNING_STATUSES,
   SEARCH_DEBOUNCE_MS,
   type AdminStatisticsQuery,
   type AdminStatisticsRow,
   type CourseProgressStat,
+  type LearningStatus,
 } from "@lms/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
@@ -24,7 +26,10 @@ import {
   fetchFilterCourses,
   fetchStatistics,
 } from "../features/statistics/statisticsApi";
-import { formatStatisticsProgress } from "../features/statistics/statisticsFormat";
+import {
+  formatStatisticsProgress,
+  LEARNING_STATUS_LABELS,
+} from "../features/statistics/statisticsFormat";
 import {
   readStatisticsQuery,
   toSearchParams,
@@ -185,7 +190,9 @@ export function AdminStatisticsPage() {
       label: "Выбранный курс вне списка",
     });
   }
-  const hasFilter = Boolean(query.courseId || query.groupName);
+  const hasFilter = Boolean(
+    query.courseId || query.groupName || query.learningStatus,
+  );
   const data = list.data;
 
   return (
@@ -210,11 +217,31 @@ export function AdminStatisticsPage() {
           initialValue={query.groupName ?? ""}
           onChange={updateGroup}
         />
+        <Select
+          label="Статус обучения"
+          options={[
+            { value: "", label: "Любой статус" },
+            ...LEARNING_STATUSES.map((status) => ({
+              value: status,
+              label: LEARNING_STATUS_LABELS[status],
+            })),
+          ]}
+          value={query.learningStatus ?? ""}
+          onChange={(event) =>
+            updateQuery({
+              learningStatus: (event.target.value as LearningStatus) || undefined,
+            })
+          }
+        />
         <Button
           variant="secondary"
           disabled={!hasFilter}
           onClick={() =>
-            updateQuery({ courseId: undefined, groupName: undefined })
+            updateQuery({
+              courseId: undefined,
+              groupName: undefined,
+              learningStatus: undefined,
+            })
           }
         >
           Сбросить фильтры

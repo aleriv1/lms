@@ -4,6 +4,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ROLE_LABELS } from "../components/layout/navItems";
 import { EmptyState, ErrorState, Loader } from "../components/ui";
 import { fetchUserStatistics } from "../features/statistics/statisticsApi";
+import { ActivityFeed } from "../features/statistics/ActivityFeed";
 import {
   CourseStatisticsTable,
   TestResultsTable,
@@ -102,9 +103,7 @@ export function AdminStatisticsUserPage() {
       </section>
       <section>
         <h2>Последние учебные действия</h2>
-        {data.recentActivity.length === 0 && (
-          <EmptyState title="Данных об активности пока нет" />
-        )}
+        <ActivityFeed events={data.recentActivity} />
       </section>
     </section>
   );

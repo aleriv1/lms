@@ -1,6 +1,7 @@
 import {
   adminStatisticsQuerySchema,
   GROUP_NAME_MAX_LENGTH,
+  LEARNING_STATUSES,
   PAGE_SIZES,
 } from "@lms/shared";
 import { describe, expect, it } from "vitest";
@@ -11,14 +12,37 @@ import { readStatisticsQuery, toSearchParams } from "./statisticsQueryParams";
 describe("statistics URL query", () => {
   it("uses the shared defaults and strips unsupported controls", () => {
     const query = readStatisticsQuery(
-      new URLSearchParams("learningStatus=completed&sortBy=name"),
+      new URLSearchParams("sortBy=name"),
     );
     expect(query).toEqual(adminStatisticsQuerySchema.parse({}));
-    expect(
-      toSearchParams({ ...query, learningStatus: "completed" }).has(
-        "learningStatus",
-      ),
-    ).toBe(false);
+    expect(toSearchParams(query).has("sortBy")).toBe(false);
+  });
+
+  it.each(LEARNING_STATUSES)(
+    "round-trips learning status %s with the other filters",
+    (learningStatus) => {
+      const query = adminStatisticsQuerySchema.parse({
+        page: 2,
+        pageSize: 10,
+        courseId: "abcdefabcdefabcdefabcdef",
+        groupName: "Смена А",
+        learningStatus,
+      });
+      expect(readStatisticsQuery(toSearchParams(query))).toEqual(query);
+    },
+  );
+
+  it("falls back to defaults for an invalid learning status with other filters", () => {
+    const params = new URLSearchParams({
+      page: "2",
+      pageSize: "20",
+      courseId: "abcdefabcdefabcdefabcdef",
+      groupName: "Смена А",
+      learningStatus: "unknown",
+    });
+    expect(readStatisticsQuery(params)).toEqual(
+      adminStatisticsQuerySchema.parse({}),
+    );
   });
 
   it.each(PAGE_SIZES)(
@@ -55,6 +79,7 @@ describe("statistics URL query", () => {
         pageSize: 10,
         groupName: "",
         courseId: undefined,
+        learningStatus: undefined,
       }).toString(),
     ).toBe("page=1&pageSize=10");
   });
