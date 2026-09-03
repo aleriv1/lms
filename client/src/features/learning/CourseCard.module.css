@@ -1,0 +1,39 @@
+.card {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.cover,
+.placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-surface-subtle);
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  overflow-wrap: anywhere;
+}
+
+.body h3 {
+  margin: var(--space-0);
+}
+
+.control {
+  composes: button primary from "../../components/ui/Button/Button.module.css";
+  justify-self: start;
+  text-decoration: none;
+}

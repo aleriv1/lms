@@ -1,0 +1,15 @@
+.section {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.current {
+  font-weight: var(--font-weight-medium);
+}
+
+.mark {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+}

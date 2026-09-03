@@ -6,6 +6,7 @@ export { Input } from "./Input/Input";
 export { Loader } from "./Loader/Loader";
 export { Modal } from "./Modal/Modal";
 export { Pagination } from "./Pagination/Pagination";
+export { ProgressBar } from "./ProgressBar/ProgressBar";
 export { Select } from "./Select/Select";
 export { Table } from "./Table/Table";
 export { Textarea } from "./Textarea/Textarea";

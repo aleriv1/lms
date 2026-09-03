@@ -10,6 +10,9 @@ import { CourseEditPage } from "./pages/CourseEditPage";
 import { CourseListPage } from "./pages/CourseListPage";
 import { LessonCreatePage } from "./pages/LessonCreatePage";
 import { LessonEditPage } from "./pages/LessonEditPage";
+import { LearningOverviewPage } from "./pages/LearningOverviewPage";
+import { LearningCoursePage } from "./pages/LearningCoursePage";
+import { LearningLessonPage } from "./pages/LearningLessonPage";
 import { TestCreatePage } from "./pages/TestCreatePage";
 import { TestEditPage } from "./pages/TestEditPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -64,6 +67,15 @@ export function App() {
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
+            <Route path="/learning" element={<LearningOverviewPage />} />
+            <Route
+              path="/learning/courses/:courseId"
+              element={<LearningCoursePage />}
+            />
+            <Route
+              path="/learning/courses/:courseId/lessons/:lessonId"
+              element={<LearningLessonPage />}
+            />
             <Route element={<ProtectedRoute roles={["teacher", "admin"]} />}>
               <Route path="/manage/courses" element={<CourseListPage />} />
               <Route

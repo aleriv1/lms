@@ -1,0 +1,14 @@
+.card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+  overflow-wrap: anywhere;
+}
+
+.card h2,
+.card h3 {
+  margin: var(--space-0);
+}

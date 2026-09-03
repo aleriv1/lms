@@ -1,0 +1,57 @@
+.page {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.cover,
+.placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-medium);
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 0.0625rem solid var(--color-border);
+}
+
+.summary {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.description {
+  white-space: pre-wrap;
+}
+
+.notice {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.control {
+  composes: button primary from "../components/ui/Button/Button.module.css";
+  justify-self: start;
+  text-decoration: none;
+}
+
+@media (max-width: 48rem) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+}
