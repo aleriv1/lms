@@ -13,6 +13,7 @@ import { LessonEditPage } from "./pages/LessonEditPage";
 import { LearningOverviewPage } from "./pages/LearningOverviewPage";
 import { LearningCoursePage } from "./pages/LearningCoursePage";
 import { LearningLessonPage } from "./pages/LearningLessonPage";
+import { LearningTestPage } from "./pages/LearningTestPage";
 import { TestCreatePage } from "./pages/TestCreatePage";
 import { TestEditPage } from "./pages/TestEditPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -75,6 +76,10 @@ export function App() {
             <Route
               path="/learning/courses/:courseId/lessons/:lessonId"
               element={<LearningLessonPage />}
+            />
+            <Route
+              path="/learning/tests/:testId"
+              element={<LearningTestPage />}
             />
             <Route element={<ProtectedRoute roles={["teacher", "admin"]} />}>
               <Route path="/manage/courses" element={<CourseListPage />} />

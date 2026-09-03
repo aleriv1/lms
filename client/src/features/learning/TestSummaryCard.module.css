@@ -12,3 +12,8 @@
 .card h3 {
   margin: var(--space-0);
 }
+
+.start {
+  justify-self: start;
+  font-weight: var(--font-weight-medium);
+}

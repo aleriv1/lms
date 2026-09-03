@@ -275,7 +275,11 @@ function LearningLessonScreen({
       )}
       {lesson.requiredTest && (
         <section className={styles.test}>
-          <TestSummaryCard heading="Тест урока" test={lesson.requiredTest} />
+          <TestSummaryCard
+            heading="Тест урока"
+            test={lesson.requiredTest}
+            canStart={course.courseStatus !== "archived"}
+          />
           <p>Урок завершается прохождением теста</p>
         </section>
       )}

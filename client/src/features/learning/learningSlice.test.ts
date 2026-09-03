@@ -1,4 +1,5 @@
 import {
+  attemptResultSchema,
   learningCourseSchema,
   learningLessonSchema,
   lessonProgressResponseSchema,
@@ -6,17 +7,33 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
+  clearAttemptResult,
   completeLesson,
   fetchLearningCourse,
   fetchLearningLesson,
   learningReducer,
   startLesson,
+  submitAttempt,
 } from "./learningSlice";
 
 const courseId = "aaaaaaaaaaaaaaaaaaaaaaaa";
 const lessonId = "bbbbbbbbbbbbbbbbbbbbbbbb";
 const optionalId = "cccccccccccccccccccccccc";
 const neighbourId = "dddddddddddddddddddddddd";
+
+const attempt = attemptResultSchema.parse({
+  id: "ffffffffffffffffffffffff",
+  testId: "eeeeeeeeeeeeeeeeeeeeeeee",
+  courseId,
+  lessonId,
+  score: 67,
+  passingScore: 70,
+  passed: false,
+  correctCount: 2,
+  totalCount: 3,
+  attemptNumber: 4,
+  submittedAt: "2026-09-03T10:00:00.000Z",
+});
 
 const course = learningCourseSchema.parse({
   id: courseId,
@@ -92,6 +109,34 @@ function loadedState() {
 }
 
 describe("learning cache", () => {
+  it("stores the server attempt result without rewriting course or lesson state", () => {
+    const state = loadedState();
+    const result = learningReducer(
+      state,
+      submitAttempt.fulfilled(attempt, "attempt", {
+        testId: attempt.testId,
+        body: { answers: [] },
+      }),
+    );
+    expect(result.attempt.data).toEqual(attempt);
+    expect(result.course).toEqual(state.course);
+    expect(result.lesson).toEqual(state.lesson);
+  });
+
+  it("clears the result for a new empty form without discarding learning data", () => {
+    const state = learningReducer(
+      loadedState(),
+      submitAttempt.fulfilled(attempt, "attempt", {
+        testId: attempt.testId,
+        body: { answers: [] },
+      }),
+    );
+    expect(learningReducer(state, clearAttemptResult())).toEqual({
+      ...state,
+      attempt: { data: null },
+    });
+  });
+
   it("keeps the loaded material and TOC during refresh, including uppercase URLs", () => {
     let state = loadedState();
     state = learningReducer(

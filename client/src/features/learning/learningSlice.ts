@@ -1,8 +1,11 @@
 import type {
+  AttemptResult,
+  LearnerTest,
   LearningCourse,
   LearningLesson,
   LearningOverview,
   LessonProgressResponse,
+  SubmitAttemptBody,
 } from "@lms/shared";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -10,6 +13,8 @@ import { toFormError, type FormError } from "../../api/formError";
 import { logout, sessionExpired } from "../auth/authSlice";
 import type { LoadStatus } from "../courses/coursesSlice";
 import {
+  requestAttemptSubmit,
+  requestLearnerTest,
   requestLearningCourse,
   requestLearningLesson,
   requestLearningOverview,
@@ -18,6 +23,12 @@ import {
 } from "./learningApi";
 
 export type LearningState = {
+  test: {
+    data: LearnerTest | null;
+    status: LoadStatus;
+    error: FormError | null;
+  };
+  attempt: { data: AttemptResult | null };
   overview: {
     data: LearningOverview | null;
     status: LoadStatus;
@@ -36,10 +47,36 @@ export type LearningState = {
 };
 
 const initialState: LearningState = {
+  test: { data: null, status: "idle", error: null },
+  attempt: { data: null },
   overview: { data: null, status: "idle", error: null },
   course: { data: null, status: "idle", error: null },
   lesson: { data: null, status: "idle", error: null },
 };
+
+export const fetchLearnerTest = createAsyncThunk<
+  LearnerTest,
+  string,
+  { rejectValue: FormError }
+>("learning/fetchTest", async (testId, { rejectWithValue }) => {
+  try {
+    return await requestLearnerTest(testId);
+  } catch (error) {
+    return rejectWithValue(toFormError(error));
+  }
+});
+
+export const submitAttempt = createAsyncThunk<
+  AttemptResult,
+  { testId: string; body: SubmitAttemptBody },
+  { rejectValue: FormError }
+>("learning/submitAttempt", async ({ testId, body }, { rejectWithValue }) => {
+  try {
+    return await requestAttemptSubmit(testId, body);
+  } catch (error) {
+    return rejectWithValue(toFormError(error));
+  }
+});
 
 export const fetchLearningOverview = createAsyncThunk<
   LearningOverview,
@@ -126,12 +163,48 @@ function applyLessonProgress(
 const learningSlice = createSlice({
   name: "learning",
   initialState,
-  reducers: {},
+  reducers: {
+    clearAttemptResult(state) {
+      state.attempt.data = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(sessionExpired, () => initialState)
       .addCase(logout.fulfilled, () => initialState)
       .addCase(logout.rejected, () => initialState)
+      .addCase(fetchLearnerTest.pending, (state, action) => {
+        if (
+          state.test.data?.id.toLowerCase() !== action.meta.arg.toLowerCase()
+        ) {
+          state.test.data = null;
+        }
+        state.test.status = "loading";
+        state.test.error = null;
+        state.attempt.data = null;
+      })
+      .addCase(fetchLearnerTest.fulfilled, (state, action) => {
+        state.test.data = action.payload;
+        state.test.status = "ready";
+        state.test.error = null;
+      })
+      .addCase(fetchLearnerTest.rejected, (state, action) => {
+        if (action.meta.aborted) return;
+        state.test.status = "error";
+        state.test.error = action.payload ?? toFormError(action.error);
+      })
+      .addCase(submitAttempt.pending, (state) => {
+        state.attempt.data = null;
+      })
+      .addCase(submitAttempt.fulfilled, (state, action) => {
+        if (
+          state.test.data &&
+          state.test.data.id.toLowerCase() !==
+            action.payload.testId.toLowerCase()
+        )
+          return;
+        state.attempt.data = action.payload;
+      })
       .addCase(fetchLearningOverview.pending, (state) => {
         state.overview.status = "loading";
         state.overview.error = null;
@@ -196,3 +269,4 @@ const learningSlice = createSlice({
 });
 
 export const learningReducer = learningSlice.reducer;
+export const { clearAttemptResult } = learningSlice.actions;

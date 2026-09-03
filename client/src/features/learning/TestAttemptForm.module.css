@@ -1,0 +1,62 @@
+.form {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+  overflow-wrap: anywhere;
+}
+
+.question {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: var(--space-0);
+  padding: var(--space-0);
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-medium);
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.option input {
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.option input:focus-visible {
+  outline: 0.125rem solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+.question:disabled .option {
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.error p {
+  color: inherit;
+}

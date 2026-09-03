@@ -100,7 +100,11 @@ export function LearningCoursePage() {
       )}
       <LessonToc courseId={course.id} lessons={course.lessons} />
       {course.finalTest && (
-        <TestSummaryCard heading="Итоговый тест" test={course.finalTest} />
+        <TestSummaryCard
+          heading="Итоговый тест"
+          test={course.finalTest}
+          canStart={course.courseStatus !== "archived"}
+        />
       )}
     </section>
   );
