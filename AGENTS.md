@@ -167,7 +167,17 @@ Then write a self-report to `.codex/reports/slice-NN.md` containing, briefly:
 1. what was done, per checklist item;
 2. where you departed from the prompt, and why;
 3. what you could not do, and what blocked it;
-4. anything you noticed that looks wrong but was out of scope.
+4. anything you noticed that looks wrong but was out of scope;
+5. every claim the report makes about behaviour that already existed — how it
+   was checked, and what the check said.
+
+Item 5 is one line per claim: the claim, the check, the outcome. A claim that
+held gets its line too — the section is a record of what was verified, not a
+list of mistakes. A claim that did not hold is corrected in place, and the
+report says so rather than quietly carrying the corrected version. The check is
+the cheap kind: read the handler, run the command, build the previous commit and
+ask it the same question. What you say about behaviour you did not write is
+worth exactly as much as the check behind it.
 
 Item 2 includes the case where the prompt contradicted itself and you picked a
 reading. Building something the prompt's own structure did not describe is a
