@@ -35,6 +35,7 @@ import {
   toCourseListItem,
 } from "../models/Course.js";
 import { Lesson } from "../models/Lesson.js";
+import { Test } from "../models/Test.js";
 
 export const coursesRouter = Router();
 
@@ -197,6 +198,10 @@ coursesRouter.delete(
       );
     }
 
+    // Only drafts can be deleted, and a draft cannot be assigned. Keep
+    // assignments, progress and attempts; remove children before their parent.
+    await Test.deleteMany({ courseId: course._id });
+    await Lesson.deleteMany({ courseId: course._id });
     await course.deleteOne();
     response.sendStatus(204);
   },
