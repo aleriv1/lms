@@ -1,0 +1,89 @@
+.page,
+.block {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.block {
+  margin-top: var(--space-6);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-4);
+  margin: var(--space-0);
+}
+
+.cards > div {
+  padding: var(--space-4);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+.cards dt,
+.note {
+  color: var(--color-text-muted);
+}
+
+.cards dd {
+  margin: var(--space-2) var(--space-0) var(--space-0);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-medium);
+}
+
+.cards .note {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+}
+
+.links,
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+  align-items: end;
+}
+
+.marks {
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-small);
+}
+
+.marks span {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-subtle);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-small);
+}
+
+.identity {
+  margin: var(--space-0);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.identity > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.identity dt {
+  color: var(--color-text-muted);
+}
+
+.identity dd {
+  margin: var(--space-0);
+  overflow-wrap: anywhere;
+}

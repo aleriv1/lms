@@ -3,6 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { AdminUserDetailPage } from "./pages/AdminUserDetailPage";
 import { AdminUserListPage } from "./pages/AdminUserListPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { AdminStatisticsPage } from "./pages/AdminStatisticsPage";
+import { AdminStatisticsUserPage } from "./pages/AdminStatisticsUserPage";
 import { ErrorState, Loader } from "./components/ui";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { CourseCreatePage } from "./pages/CourseCreatePage";
@@ -109,6 +112,15 @@ export function App() {
               />
             </Route>
             <Route element={<ProtectedRoute roles={["admin"]} />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route
+                path="/admin/statistics"
+                element={<AdminStatisticsPage />}
+              />
+              <Route
+                path="/admin/statistics/users/:userId"
+                element={<AdminStatisticsUserPage />}
+              />
               <Route path="/admin/users" element={<AdminUserListPage />} />
               <Route
                 path="/admin/users/:userId"

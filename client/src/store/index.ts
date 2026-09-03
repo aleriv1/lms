@@ -7,6 +7,7 @@ import { learningReducer } from "../features/learning/learningSlice";
 import { lessonsReducer } from "../features/lessons/lessonsSlice";
 import { testsReducer } from "../features/tests/testsSlice";
 import { adminUsersReducer } from "../features/users/adminUsersSlice";
+import { statisticsReducer } from "../features/statistics/statisticsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     lessons: lessonsReducer,
     tests: testsReducer,
     adminUsers: adminUsersReducer,
+    statistics: statisticsReducer,
   },
 });
 

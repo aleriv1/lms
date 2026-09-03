@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { Loader } from "../components/ui";
 import { ROLE_LABELS } from "../components/layout/navItems";
+import { ProfileStatistics } from "../features/statistics/ProfileStatistics";
 import { useAppSelector } from "../store/hooks";
 import styles from "./ProfilePage.module.css";
 
@@ -41,6 +42,7 @@ export function ProfilePage() {
           <dd>{user.groupName ?? "Не указана"}</dd>
         </div>
       </dl>
+      <ProfileStatistics key={user.id} />
     </section>
   );
 }

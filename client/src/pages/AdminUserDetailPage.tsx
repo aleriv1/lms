@@ -75,6 +75,7 @@ export function AdminUserDetailPage() {
         <h1>{user.name}</h1>
         <p>{user.email}</p>
       </div>
+      <Link to={`/admin/statistics/users/${user.id}`}>Статистика обучения</Link>
       <section>
         <h2>Данные пользователя</h2>
         <AdminUserForm
