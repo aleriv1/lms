@@ -76,6 +76,8 @@ npm run dev
 
 ## Сборка и проверки
 
+`npm run test` требует запущенную MongoDB (`npm run db:up`) и использует отдельную базу `corporate-learning-test`, содержимое которой удаляется тестами.
+
 ```sh
 npm run build
 npm run typecheck

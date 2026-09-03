@@ -7,6 +7,7 @@ import type { ChangePasswordBody, UpdateProfileBody } from "@lms/shared";
 import { Router } from "express";
 
 import { hashPassword, verifyPassword } from "../auth/password.js";
+import { isDuplicateKeyError } from "../db/duplicateKey.js";
 import { AppError } from "../errors/AppError.js";
 import {
   getAuthenticatedUser,
@@ -18,15 +19,6 @@ import { toPublicUser, User } from "../models/User.js";
 export const usersRouter = Router();
 
 const EMAIL_TAKEN_FIELDS = [{ field: "email", message: "Email уже занят" }];
-
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === 11000
-  );
-}
 
 usersRouter.patch(
   "/me",
