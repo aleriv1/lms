@@ -22,11 +22,22 @@ import {
   loadStudiableAssignedCourse,
 } from "../learning/assignedCourse.js";
 import {
+  findAttemptStats,
+  hasPassedTest,
+  NO_ATTEMPTS,
+  type AttemptStats,
+} from "../learning/attemptStats.js";
+import {
+  findFinalTestState,
+  settleCourseCompletion,
+} from "../learning/courseCompletion.js";
+import {
   computeCourseProgress,
   findLastActivityByCourse,
   loadCourseLearningState,
   sumCompletedLessonMinutes,
 } from "../learning/courseProgress.js";
+import { completeLesson } from "../learning/lessonCompletion.js";
 import {
   computeProgressPercent,
   findAdjacentLessons,
@@ -41,6 +52,7 @@ import { CourseAssignment } from "../models/CourseAssignment.js";
 import { Lesson, type LessonDocument } from "../models/Lesson.js";
 import { LessonProgress } from "../models/LessonProgress.js";
 import { Test } from "../models/Test.js";
+import { learningTestsRouter } from "./learningTests.js";
 
 /**
  * The learner's half of the system (specification 9.3). No `requireRole` here:
@@ -51,6 +63,10 @@ import { Test } from "../models/Test.js";
 export const learningRouter = Router();
 
 learningRouter.use(requireAuth);
+
+// Taking a test lives in its own file: two handlers plus the scoring would have
+// made this one unreadable end to end.
+learningRouter.use("/tests", learningTestsRouter);
 
 const courseParamsSchema = z.object({ courseId: objectIdSchema });
 const courseLessonParamsSchema = z.object({
@@ -77,35 +93,21 @@ type LearningTestSource = {
 };
 
 /**
- * A test as the learner sees it listed. The three result fields are `false`,
- * `null` and `0` for everyone in this slice, and that is the truth rather than
- * a placeholder: `TestAttempt` arrives in slice 08, so no attempt exists to
- * report. Slice 08 replaces the three lines here and nowhere else.
+ * A test as the learner sees it listed. The three result fields come from
+ * `TestAttempt` (slice 08); a test nobody has attempted reports the same
+ * `false`, `null` and `0` this function returned unconditionally before
+ * attempts existed.
  */
-function toLearningTestRef(test: LearningTestSource): LearningTestRef {
+function toLearningTestRef(
+  test: LearningTestSource,
+  stats: AttemptStats = NO_ATTEMPTS,
+): LearningTestRef {
   return {
     id: test._id.toString(),
     title: test.title,
     passingScore: test.passingScore,
-    passed: false,
-    bestScore: null,
-    attemptsCount: 0,
+    ...stats,
   };
-}
-
-/**
- * Specification 4.3 counts a course as finished when the final test, if there
- * is one, is passed. Until slice 08 nothing can be passed, so a course with a
- * final test does not finish in this slice.
- */
-async function findFinalTestState(
-  courseId: Types.ObjectId,
-): Promise<{ passed: boolean } | null> {
-  const finalTest = await Test.findOne({ courseId, lessonId: null }).select(
-    "_id",
-  );
-
-  return finalTest ? { passed: false } : null;
 }
 
 /** The lesson a learning action addresses: published, or it does not exist. */
@@ -232,6 +234,13 @@ learningRouter.get(
       }
     }
 
+    // One aggregation for every test of the course, not one per test: the page
+    // must not issue a query per lesson (specification 11.2).
+    const attemptStats = await findAttemptStats(
+      userId,
+      tests.map((test) => test._id),
+    );
+
     response.json(
       learningCourseSchema.parse({
         id: course._id.toString(),
@@ -261,7 +270,12 @@ learningRouter.get(
             hasTest: lessonTests.has(lessonId),
           };
         }),
-        finalTest: finalTest ? toLearningTestRef(finalTest) : null,
+        finalTest: finalTest
+          ? toLearningTestRef(
+              finalTest,
+              attemptStats.get(finalTest._id.toString()),
+            )
+          : null,
         nextLessonId: state.nextLessonId,
       }),
     );
@@ -306,6 +320,11 @@ learningRouter.get(
     const requiredTest = await Test.findOne({ lessonId: lesson._id }).select(
       "title passingScore",
     );
+    const requiredTestStats = requiredTest
+      ? (await findAttemptStats(userId, [requiredTest._id])).get(
+          requiredTest._id.toString(),
+        )
+      : undefined;
 
     response.json(
       learningLessonSchema.parse({
@@ -322,7 +341,9 @@ learningRouter.get(
           url: link.url,
         })),
         progressStatus: lessonState.progressStatus,
-        requiredTest: requiredTest ? toLearningTestRef(requiredTest) : null,
+        requiredTest: requiredTest
+          ? toLearningTestRef(requiredTest, requiredTestStats)
+          : null,
         ...findAdjacentLessons(state.states, lessonId),
         courseProgressPercent: state.progressPercent,
       }),
@@ -381,9 +402,12 @@ learningRouter.post(
         // Starting a lesson changes no lesson's state, so the course figures
         // are the ones computed above.
         courseProgressPercent: state.progressPercent,
+        // Starting a lesson completes nothing, so this reports the state and
+        // does not settle it: the transition belongs to `complete` and to a
+        // passing attempt.
         courseCompleted: isCourseCompleted(
           state.required,
-          await findFinalTestState(lesson.courseId),
+          await findFinalTestState(userId, lesson.courseId),
         ),
         nextLessonId: state.nextLessonId,
       }),
@@ -416,10 +440,15 @@ learningRouter.post(
 
     if (lessonState.progressStatus !== "completed") {
       // The lesson has no flag of its own for this: the link to a test is what
-      // makes the test mandatory (specification 4.2, 8.3). The refusal is
-      // unconditional here because no attempt can exist yet; slice 08 adds
-      // "unless a passing attempt exists" to this condition.
-      if (await Test.exists({ lessonId: lesson._id })) {
+      // makes the test mandatory (specification 4.2, 8.3). A passing attempt
+      // lifts the refusal, and it is looked up by the test rather than by the
+      // attempt's own `lessonId`, because a test reattached after the attempt
+      // is still the test that was passed.
+      const lessonTest = await Test.findOne({ lessonId: lesson._id }).select(
+        "_id",
+      );
+
+      if (lessonTest && !(await hasPassedTest(userId, lessonTest._id))) {
         throw lessonTestRequiredError();
       }
 
@@ -427,19 +456,12 @@ learningRouter.post(
     }
 
     const updated = await loadCourseLearningState(userId, course._id);
-    const courseCompleted = isCourseCompleted(
+    const courseCompleted = await settleCourseCompletion(
+      userId,
+      course._id,
+      assignment,
       updated.required,
-      await findFinalTestState(course._id),
     );
-
-    // The transition runs one way and once: the date says when the training was
-    // finished, and a lesson published later lowers the percentage without
-    // taking that fact back (specification 4.2 keeps stored progress).
-    if (courseCompleted && assignment.status !== "completed") {
-      assignment.status = "completed";
-      assignment.completedAt = new Date();
-      await assignment.save();
-    }
 
     response.json(
       lessonProgressResponseSchema.parse({
@@ -453,44 +475,3 @@ learningRouter.post(
     );
   },
 );
-
-/** Completes a lesson whether or not it was started first. */
-async function completeLesson(
-  userId: Types.ObjectId,
-  lesson: LessonDocument,
-): Promise<void> {
-  const completedAt = new Date();
-  const progress = await LessonProgress.findOne({
-    userId,
-    lessonId: lesson._id,
-  });
-
-  if (progress) {
-    progress.status = "completed";
-    progress.completedAt = completedAt;
-    await progress.save();
-    return;
-  }
-
-  try {
-    await LessonProgress.create({
-      userId,
-      courseId: lesson.courseId,
-      lessonId: lesson._id,
-      status: "completed",
-      startedAt: completedAt,
-      completedAt,
-    });
-  } catch (error) {
-    // A `start` that arrived in between created the row; completing it is the
-    // same write either way.
-    if (!isDuplicateKeyError(error)) {
-      throw error;
-    }
-
-    await LessonProgress.updateOne(
-      { userId, lessonId: lesson._id },
-      { $set: { status: "completed", completedAt } },
-    );
-  }
-}
