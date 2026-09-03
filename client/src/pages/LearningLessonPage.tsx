@@ -123,7 +123,10 @@ function LearningLessonScreen({
     startRequest.current = dispatch(startLesson(lessonId)).then(
       async (result) => {
         if (!active.current || !startLesson.fulfilled.match(result)) return;
-        setCourseCompleted(result.payload.courseCompleted);
+        // `courseCompleted` is ignored here on purpose: `start` fires by itself
+        // when the page opens, and an already finished course answers `true`.
+        // The notice confirms an action the learner took, so only `complete`
+        // may raise it.
         await Promise.all([reloadLesson(), reloadCourse()]);
       },
     );
