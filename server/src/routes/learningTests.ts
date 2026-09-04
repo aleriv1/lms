@@ -258,8 +258,17 @@ learningTestsRouter.post(
       // Specification 7.7: "a successful result unlocks what follows". A test
       // attached to a lesson is what makes that lesson's test mandatory
       // (4.2, 8.3), so passing it completes the lesson itself.
-      if (lesson) {
-        await completeLesson(userId, lesson);
+      // Specification 8.8 lists lesson completion among the events the feed
+      // must hold, and this is the second way a lesson gets completed. The
+      // return value keeps a repeated pass on a finished lesson from writing a
+      // second event.
+      if (lesson && (await completeLesson(userId, lesson))) {
+        await recordActivity({
+          userId,
+          type: "lesson_completed",
+          course: { id: course._id, title: course.title },
+          lesson: { id: lesson._id, title: lesson.title },
+        });
       }
 
       // Reached after any pass, not only a final test: a lesson closed by its

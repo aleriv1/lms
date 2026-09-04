@@ -214,7 +214,7 @@ describe("activity over HTTP", () => {
     }
   });
 
-  it("records the existing lesson-test completion without a separate lesson_completed event", async () => {
+  it("records the lesson completed by a passing test, once", async () => {
     const { student, lesson, test, agent, answer, correctId } =
       await setup(true);
     await agent
@@ -233,7 +233,19 @@ describe("activity over HTTP", () => {
     ).toMatchObject({ status: "completed" });
     expect(
       (await loadRecentActivity(student._id)).map((event) => event.type),
-    ).toEqual(["course_completed", "test_submitted"]);
+    ).toEqual(["course_completed", "lesson_completed", "test_submitted"]);
+    // A second pass re-completes an already finished lesson; the feed must not
+    // grow a second `lesson_completed` for it.
+    await agent
+      .post(`/api/learning/tests/${test._id}/attempts`)
+      .send(answer(correctId))
+      .expect(201);
+    expect(
+      await ActivityEvent.countDocuments({
+        userId: student._id,
+        type: "lesson_completed",
+      }),
+    ).toBe(1);
   });
 
   it("limits and orders snapshots and aggregates only the learner's four-week window", async () => {

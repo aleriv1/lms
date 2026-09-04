@@ -9,11 +9,15 @@ import { LessonProgress } from "../models/LessonProgress.js";
  * slice 08: the learner's own "finish the lesson" action, and a passing attempt
  * on the lesson's test — specification 7.7 has a passing result unlock what
  * follows, and a lesson closed by a test is closed by passing it.
+ *
+ * Returns `true` when this call is what completed the lesson. Repeating a
+ * passing attempt on a lesson already finished returns `false`, so the caller
+ * writes one `lesson_completed` event per completion (specification 8.8).
  */
 export async function completeLesson(
   userId: Types.ObjectId,
   lesson: LessonDocument,
-): Promise<void> {
+): Promise<boolean> {
   const completedAt = new Date();
   const progress = await LessonProgress.findOne({
     userId,
@@ -21,10 +25,11 @@ export async function completeLesson(
   });
 
   if (progress) {
+    const wasCompleted = progress.status === "completed";
     progress.status = "completed";
     progress.completedAt = completedAt;
     await progress.save();
-    return;
+    return !wasCompleted;
   }
 
   try {
@@ -36,6 +41,7 @@ export async function completeLesson(
       startedAt: completedAt,
       completedAt,
     });
+    return true;
   } catch (error) {
     // A `start` that arrived in between created the row; completing it is the
     // same write either way.
@@ -43,9 +49,11 @@ export async function completeLesson(
       throw error;
     }
 
+    // The row this race created belongs to a `start`, so it was not complete.
     await LessonProgress.updateOne(
       { userId, lessonId: lesson._id },
       { $set: { status: "completed", completedAt } },
     );
+    return true;
   }
 }

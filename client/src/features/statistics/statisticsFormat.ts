@@ -17,10 +17,16 @@ export const LEARNING_STATUS_LABELS: Record<LearningStatus, string> = {
   completed: "Завершено",
 };
 
+/**
+ * The server cuts the weeks at Monday 00:00 UTC (specification 8.8), so the
+ * label is read in UTC too: in a timezone behind it the local date of that
+ * instant is the Sunday before, and the column would name the wrong day.
+ */
 export function formatWeekStart(value: string): string {
   return new Date(value).toLocaleDateString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
+    timeZone: "UTC",
   });
 }
 
