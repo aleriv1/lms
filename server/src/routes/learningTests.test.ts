@@ -90,6 +90,38 @@ describe("learner tests over HTTP", () => {
         .expect(201);
       const result = attemptResultSchema.parse(response.body);
       expect(result).toMatchObject({ ...expected, totalCount: 1 });
+      expect(result.review).toEqual([
+        {
+          questionId: questionId.toString(),
+          text: "Выберите оба правильных ответа",
+          type: "multiple",
+          order: 1,
+          isCorrect: expected.passed,
+          options: [
+            {
+              id: firstId.toString(),
+              text: "Первый",
+              isCorrect: true,
+              isSelected: selected.includes(firstId),
+            },
+            {
+              id: secondId.toString(),
+              text: "Второй",
+              isCorrect: true,
+              isSelected: selected.includes(secondId),
+            },
+            {
+              id: wrongId.toString(),
+              text: "Лишний",
+              isCorrect: false,
+              isSelected: selected.includes(wrongId),
+            },
+          ],
+        },
+      ]);
+      expect(result.review.filter((item) => item.isCorrect)).toHaveLength(
+        result.correctCount,
+      );
       expect(await TestAttempt.findById(result.id)).toMatchObject({
         ...expected,
         totalCount: 1,
@@ -198,6 +230,62 @@ describe("learner tests over HTTP", () => {
       }),
     ).toBe(2);
     expect(await TestAttempt.findById(firstResult.id).lean()).toEqual(first);
+  });
+
+  it("returns one review entry per question in learner order", async () => {
+    const teacher = await createUser({ role: "teacher" });
+    const student = await createUser();
+    const course = await Course.create({
+      title: "Порядок разбора",
+      category: "Обучение",
+      audience: "general",
+      shortDescription: "Проверка порядка вопросов",
+      authorId: teacher._id,
+      status: "published",
+    });
+    await CourseAssignment.create({
+      userId: student._id,
+      courseId: course._id,
+      assignedBy: teacher._id,
+    });
+    const test = await Test.create({
+      courseId: course._id,
+      title: "Порядок вопросов",
+      passingScore: 70,
+      questions: [2, 1].map((order) => ({
+        text: `Вопрос ${order}`,
+        type: "single",
+        order,
+        options: [
+          { text: "Да", isCorrect: true },
+          { text: "Нет", isCorrect: false },
+        ],
+      })),
+    });
+    const agent = await signIn(student.email, TEST_PASSWORD);
+    const read = await agent.get(`/api/learning/tests/${test._id}`).expect(200);
+    expect(JSON.stringify(read.body)).not.toContain("isCorrect");
+    const learner = learnerTestSchema.parse(read.body);
+    const response = await agent
+      .post(`/api/learning/tests/${test._id}/attempts`)
+      .send({ answers: [] })
+      .expect(201);
+    const result = attemptResultSchema.parse(response.body);
+    expect(result.review.map((item) => item.questionId)).toEqual(
+      learner.questions.map((item) => item.id),
+    );
+    expect(result.review.map((item) => item.order)).toEqual([1, 2]);
+    expect(result.review).toHaveLength(2);
+    for (const item of result.review) {
+      expect(item.isCorrect).toBe(false);
+      expect(item.options).toMatchObject([
+        { text: "Да", isCorrect: true, isSelected: false },
+        { text: "Нет", isCorrect: false, isSelected: false },
+      ]);
+    }
+    expect(result.review.filter((item) => item.isCorrect)).toHaveLength(
+      result.correctCount,
+    );
   });
 
   it("allows reading an archived test but refuses a new attempt", async () => {

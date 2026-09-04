@@ -60,7 +60,10 @@ export const questionOptionInputSchema = z.object({
     .string()
     .trim()
     .min(QUESTION_OPTION_TEXT_MIN_LENGTH, "Текст варианта обязателен")
-    .max(QUESTION_OPTION_TEXT_MAX_LENGTH, "Текст варианта не длиннее 300 символов"),
+    .max(
+      QUESTION_OPTION_TEXT_MAX_LENGTH,
+      "Текст варианта не длиннее 300 символов",
+    ),
   isCorrect: z.boolean(),
 });
 export type QuestionOptionInput = z.infer<typeof questionOptionInputSchema>;
@@ -85,7 +88,9 @@ export const questionInputSchema = z
       .max(QUESTION_OPTIONS_MAX_COUNT, "Не больше десяти вариантов"),
   })
   .superRefine((question, ctx) => {
-    const correctCount = question.options.filter((option) => option.isCorrect).length;
+    const correctCount = question.options.filter(
+      (option) => option.isCorrect,
+    ).length;
 
     if (correctCount === 0) {
       ctx.addIssue({
@@ -100,7 +105,8 @@ export const questionInputSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["options"],
-        message: "Для вопроса с одним ответом правильный вариант должен быть один",
+        message:
+          "Для вопроса с одним ответом правильный вариант должен быть один",
       });
     }
   });
@@ -178,10 +184,31 @@ export const submitAttemptBodySchema = z.object({
 export type SubmitAttemptBody = z.infer<typeof submitAttemptBodySchema>;
 
 /**
- * Результат попытки. Подробный разбор ответов — расширение Этапа 2 (ТЗ, 18.2),
- * поэтому в контракте его нет.
+ * Разбор одного вопроса после отправки попытки (ТЗ, 18.2). Строится из снимка
+ * вопросов попытки (8.7): правильность известна серверу и раскрывается только
+ * после отправки (10.3), в ответе на саму попытку.
  */
+export const attemptReviewOptionSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  isCorrect: z.boolean(),
+  isSelected: z.boolean(),
+});
+export type AttemptReviewOption = z.infer<typeof attemptReviewOptionSchema>;
+
+export const attemptReviewQuestionSchema = z.object({
+  questionId: z.string(),
+  text: z.string(),
+  type: questionTypeSchema,
+  order: z.number().int(),
+  isCorrect: z.boolean(),
+  options: z.array(attemptReviewOptionSchema),
+});
+export type AttemptReviewQuestion = z.infer<typeof attemptReviewQuestionSchema>;
+
+/** Результат попытки с подробным разбором ответов (ТЗ, 18.2). */
 export const attemptResultSchema = z.object({
+  review: z.array(attemptReviewQuestionSchema),
   id: objectIdSchema,
   testId: objectIdSchema,
   courseId: objectIdSchema,

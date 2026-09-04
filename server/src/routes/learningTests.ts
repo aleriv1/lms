@@ -14,6 +14,7 @@ import { isDuplicateKeyError } from "../db/duplicateKey.js";
 import { AppError } from "../errors/AppError.js";
 import { lessonLockedError } from "../learning/accessRules.js";
 import {
+  buildAttemptReview,
   buildQuestionsSnapshot,
   gradeAttempt,
 } from "../learning/attemptScoring.js";
@@ -280,6 +281,7 @@ learningTestsRouter.post(
 
     response.status(201).json(
       attemptResultSchema.parse({
+        review: buildAttemptReview(questionsSnapshot, graded.answers),
         id: attempt._id.toString(),
         testId: test._id.toString(),
         courseId: course._id.toString(),

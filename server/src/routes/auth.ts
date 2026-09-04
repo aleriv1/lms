@@ -6,7 +6,11 @@ import {
 import type { LoginBody, RegisterBody } from "@lms/shared";
 import { Router } from "express";
 
-import { hashPassword, verifyPassword } from "../auth/password.js";
+import {
+  hashPassword,
+  unknownAccountPasswordHash,
+  verifyPassword,
+} from "../auth/password.js";
 import {
   clearSessionCookie,
   setSessionCookie,
@@ -18,17 +22,20 @@ import {
   requireAuth,
 } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
+import {
+  clearFailedLogins,
+  loginRateLimit,
+  recordFailedLogin,
+} from "../middleware/loginRateLimit.js";
 import { toPublicUser, User } from "../models/User.js";
 
 export const authRouter = Router();
 
 const EMAIL_TAKEN_FIELDS = [{ field: "email", message: "Email уже занят" }];
 
-const INVALID_CREDENTIALS = new AppError(
-  401,
-  "invalid_credentials",
-  "Неверный email или пароль",
-);
+function invalidCredentials(): AppError {
+  return new AppError(401, "invalid_credentials", "Неверный email или пароль");
+}
 
 function isDuplicateKeyError(error: unknown): boolean {
   return (
@@ -92,6 +99,7 @@ authRouter.post(
 authRouter.post(
   "/login",
   validate(loginBodySchema),
+  loginRateLimit,
   async (request, response, next) => {
     try {
       const body = request.body as LoginBody;
@@ -99,10 +107,17 @@ authRouter.post(
         "+passwordHash",
       );
 
-      if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
-        next(INVALID_CREDENTIALS);
+      const passwordHash =
+        user?.passwordHash ?? (await unknownAccountPasswordHash());
+      const isPasswordValid = await verifyPassword(body.password, passwordHash);
+
+      if (!user || !isPasswordValid) {
+        recordFailedLogin(request);
+        next(invalidCredentials());
         return;
       }
+
+      clearFailedLogins(request);
 
       if (user.status === "blocked") {
         next(
@@ -112,7 +127,8 @@ authRouter.post(
       }
 
       if (user.status === "archived") {
-        next(INVALID_CREDENTIALS);
+        recordFailedLogin(request);
+        next(invalidCredentials());
         return;
       }
 

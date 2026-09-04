@@ -22,6 +22,7 @@ const optionalId = "cccccccccccccccccccccccc";
 const neighbourId = "dddddddddddddddddddddddd";
 
 const attempt = attemptResultSchema.parse({
+  review: [],
   id: "ffffffffffffffffffffffff",
   testId: "eeeeeeeeeeeeeeeeeeeeeeee",
   courseId,

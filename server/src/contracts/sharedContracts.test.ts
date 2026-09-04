@@ -186,6 +186,7 @@ const courseStat = {
   completedAt: date,
 };
 const attempt = {
+  review: [],
   id,
   testId: id,
   courseId: id,

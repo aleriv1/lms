@@ -17,6 +17,55 @@ afterAll(disconnectTestDatabase);
 beforeEach(clearDatabase);
 
 describe("authentication over HTTP", () => {
+  it("limits the sixth wrong password using the normalised email", async () => {
+    const user = await createUser();
+    const agent = api();
+    for (let index = 0; index < 5; index += 1) {
+      const response = await agent
+        .post("/api/auth/login")
+        .send({
+          email: index % 2 ? ` ${user.email.toUpperCase()} ` : user.email,
+          password: "WrongPassword1",
+        })
+        .expect(401);
+      expect(apiErrorSchema.parse(response.body).code).toBe(
+        "invalid_credentials",
+      );
+    }
+    const refused = await agent
+      .post("/api/auth/login")
+      .send({
+        email: user.email,
+        password: "WrongPassword1",
+      })
+      .expect(429);
+    expect(apiErrorSchema.parse(refused.body).code).toBe("rate_limited");
+    expect(Number(refused.headers["retry-after"])).toBeGreaterThan(0);
+  });
+
+  it("clears failures after a correct password", async () => {
+    const user = await createUser();
+    const agent = api();
+    for (let round = 0; round < 2; round += 1) {
+      for (let index = 0; index < 4; index += 1) {
+        await agent
+          .post("/api/auth/login")
+          .send({
+            email: user.email,
+            password: "WrongPassword1",
+          })
+          .expect(401);
+      }
+      await agent
+        .post("/api/auth/login")
+        .send({
+          email: user.email,
+          password: TEST_PASSWORD,
+        })
+        .expect(200);
+    }
+  });
+
   it("signs in with an httpOnly cookie, reads the public user and logs out", async () => {
     const user = await createUser();
     const agent = api();
@@ -100,7 +149,9 @@ describe("authentication over HTTP", () => {
     const stored = await User.findById(user.id).select("+passwordHash");
     expect(stored?.passwordHash).toBeTruthy();
     expect(stored?.passwordHash).not.toBe(TEST_PASSWORD);
-    expect(await verifyPassword(TEST_PASSWORD, stored?.passwordHash ?? "")).toBe(true);
+    expect(
+      await verifyPassword(TEST_PASSWORD, stored?.passwordHash ?? ""),
+    ).toBe(true);
     const me = await agent.get("/api/auth/me").expect(200);
     expect(sessionResponseSchema.parse(me.body).user.id).toBe(user.id);
     for (const item of [response, me])

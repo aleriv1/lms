@@ -10,6 +10,7 @@ import type TestAgent from "supertest/lib/agent.js";
 import { app } from "../app.js";
 import { hashPassword } from "../auth/password.js";
 import { connectToDatabase } from "../db/connect.js";
+import { resetLoginRateLimit } from "../middleware/loginRateLimit.js";
 import { Course } from "../models/Course.js";
 import { ActivityEvent } from "../models/ActivityEvent.js";
 import { CourseAssignment } from "../models/CourseAssignment.js";
@@ -100,6 +101,8 @@ export async function disconnectTestDatabase(): Promise<void> {
 }
 
 export async function clearDatabase(): Promise<void> {
+  // Every suite resets here: process counters outlive collection drops and would poison later tests.
+  resetLoginRateLimit();
   if (!databaseApproved || !mongoose.connection.name.endsWith("-test")) {
     throw new Error("Test database reset refused: no approved connection.");
   }

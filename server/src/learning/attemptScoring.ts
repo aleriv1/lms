@@ -1,4 +1,4 @@
-import type { SubmitAttemptBody } from "@lms/shared";
+import type { AttemptReviewQuestion, SubmitAttemptBody } from "@lms/shared";
 
 import type { QuestionAttributes } from "../models/Test.js";
 import type {
@@ -111,6 +111,31 @@ export function isQuestionCorrect(
     .map((option) => option.optionId);
 
   return isSameSet(selectedOptionIds, correct);
+}
+
+export function buildAttemptReview(
+  snapshot: AttemptQuestionSnapshot[],
+  answers: AttemptAnswer[],
+): AttemptReviewQuestion[] {
+  const selectedByQuestionId = new Map(
+    answers.map((answer) => [answer.questionId, answer.optionIds]),
+  );
+  return snapshot.map((question) => {
+    const selected = selectedByQuestionId.get(question.questionId) ?? [];
+    return {
+      questionId: question.questionId,
+      text: question.text,
+      type: question.type,
+      order: question.order,
+      isCorrect: isQuestionCorrect(question, selected),
+      options: question.options.map((option) => ({
+        id: option.optionId,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        isSelected: selected.includes(option.optionId),
+      })),
+    };
+  });
 }
 
 export type AttemptScore = {

@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildAttemptReview,
   buildQuestionsSnapshot,
   gradeAttempt,
   normalizeAnswers,
@@ -44,13 +45,89 @@ const multiple = question(
   2,
 );
 
+describe("buildAttemptReview", () => {
+  it("marks all correct answers and preserves snapshot order", () => {
+    const snapshot = [single, multiple];
+    const graded = gradeAttempt(
+      snapshot,
+      [
+        { questionId: "q2", optionIds: ["y", "x"] },
+        { questionId: "q1", optionIds: ["a", "a"] },
+      ],
+      70,
+    );
+    const review = buildAttemptReview(snapshot, graded.answers);
+    expect(review.map((item) => item.questionId)).toEqual(["q1", "q2"]);
+    expect(review.every((item) => item.isCorrect)).toBe(true);
+    for (const item of review) {
+      expect(
+        item.options.every((option) => option.isSelected === option.isCorrect),
+      ).toBe(true);
+    }
+    expect(review.filter((item) => item.isCorrect)).toHaveLength(
+      graded.correctCount,
+    );
+  });
+
+  it("reveals the missing correct option in a partly wrong attempt", () => {
+    const snapshot = [single, multiple];
+    const graded = gradeAttempt(
+      snapshot,
+      [
+        { questionId: "q1", optionIds: ["a"] },
+        { questionId: "q2", optionIds: ["x"] },
+      ],
+      70,
+    );
+    const review = buildAttemptReview(snapshot, graded.answers);
+    expect(review[1]).toMatchObject({
+      isCorrect: false,
+      options: [
+        { id: "x", isCorrect: true, isSelected: true },
+        { id: "y", isCorrect: true, isSelected: false },
+        { id: "z", isCorrect: false, isSelected: false },
+      ],
+    });
+    expect(review.filter((item) => item.isCorrect)).toHaveLength(
+      graded.correctCount,
+    );
+  });
+
+  it("shows an unanswered question as wrong with no selections", () => {
+    const review = buildAttemptReview([single], []);
+    expect(review[0]?.isCorrect).toBe(false);
+    expect(review[0]?.options.every((item) => !item.isSelected)).toBe(true);
+  });
+
+  it("keeps an unknown option wrong without inventing an option row", () => {
+    const graded = gradeAttempt(
+      [single],
+      [{ questionId: "q1", optionIds: ["a", "unknown"] }],
+      70,
+    );
+    const review = buildAttemptReview([single], graded.answers);
+    expect(review[0]?.isCorrect).toBe(false);
+    expect(review[0]?.options.map((item) => item.id)).toEqual(["a", "b", "c"]);
+    expect(
+      review[0]?.options
+        .filter((item) => item.isSelected)
+        .map((item) => item.id),
+    ).toEqual(["a"]);
+    expect(review.filter((item) => item.isCorrect)).toHaveLength(
+      graded.correctCount,
+    );
+  });
+});
+
 describe("gradeAttempt", () => {
   it("counts a single-answer question only for the correct option", () => {
     expect(
-      gradeAttempt([single], [{ questionId: "q1", optionIds: ["a"] }], 70).score,
+      gradeAttempt([single], [{ questionId: "q1", optionIds: ["a"] }], 70)
+        .score,
     ).toBe(100);
     expect(
-      gradeAttempt([single], [{ questionId: "q1", optionIds: ["b"] }], 70).score,
+      gradeAttempt([single], [{ questionId: "q1", optionIds: ["b"] }], 70)
+        .score,
     ).toBe(0);
   });
 
