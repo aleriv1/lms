@@ -29,3 +29,38 @@
 .invalid {
   border-color: var(--color-danger);
 }
+
+.control {
+  position: relative;
+  display: grid;
+}
+
+.withToggle {
+  padding-right: calc(var(--control-height) - var(--space-1));
+}
+
+.toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--color-text-muted);
+  background: var(--color-transparent);
+  border: 0;
+  border-radius: var(--radius-medium);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  color: var(--color-text);
+}
+
+.toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
