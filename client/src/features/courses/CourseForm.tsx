@@ -52,6 +52,9 @@ export function CourseForm({
     const error = await onSubmit(body);
 
     if (!error) {
+      // What is on screen is now what is stored, so the unsaved-changes guard
+      // must let the author leave. LessonForm and TestForm reset the same way.
+      form.reset(form.getValues());
       return;
     }
 

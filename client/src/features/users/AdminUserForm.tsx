@@ -7,7 +7,7 @@ import {
   type AdminUpdateUserBody,
   type AdminUserDetail,
 } from "@lms/shared";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 
@@ -21,6 +21,8 @@ type AdminUserFormProps = {
   user: AdminUserDetail;
   isSelf: boolean;
   onSubmit: (body: AdminUpdateUserBody) => Promise<FormError | null>;
+  /** Lets the page know there is unsaved input, so it can refuse to leave it behind. */
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 type AdminUserFormInput = z.input<typeof adminUpdateUserBodySchema>;
@@ -51,7 +53,12 @@ function ActionError({ error }: { error: FormError }) {
   );
 }
 
-export function AdminUserForm({ user, isSelf, onSubmit }: AdminUserFormProps) {
+export function AdminUserForm({
+  user,
+  isSelf,
+  onSubmit,
+  onDirtyChange,
+}: AdminUserFormProps) {
   const [confirmation, setConfirmation] = useState<AdminUpdateUserBody | null>(
     null,
   );
@@ -68,6 +75,14 @@ export function AdminUserForm({ user, isSelf, onSubmit }: AdminUserFormProps) {
       status: user.status,
     },
   });
+
+  // This form saves through a confirmation dialog, so the request runs outside
+  // handleSubmit and formState.isSubmitting stays false: isSaving is the flag
+  // that says a save is in flight.
+  const { isDirty } = form.formState;
+  useEffect(() => {
+    onDirtyChange?.(isDirty && !isSaving);
+  }, [isDirty, isSaving, onDirtyChange]);
 
   const save = async (body: AdminUpdateUserBody) => {
     if (isSaving) return;

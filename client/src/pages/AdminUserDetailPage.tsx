@@ -1,5 +1,5 @@
 import type { AdminUpdateUserBody } from "@lms/shared";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import { toFormError, type FormError } from "../api/formError";
@@ -11,6 +11,7 @@ import {
   fetchAdminUser,
   updateAdminUser,
 } from "../features/users/adminUsersSlice";
+import { UnsavedChangesGuard } from "../routes/UnsavedChangesGuard";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import styles from "./AdminUserDetailPage.module.css";
 
@@ -19,6 +20,11 @@ export function AdminUserDetailPage() {
   const dispatch = useAppDispatch();
   const detail = useAppSelector((state) => state.adminUsers.detail);
   const sessionUser = useAppSelector((state) => state.auth.user);
+  // Both forms of this page share one guard. React Router keeps a single
+  // blocker per router and consults only the last one registered, so two
+  // guards on one page would silently let the other form's input go.
+  const [isUserFormDirty, setIsUserFormDirty] = useState(false);
+  const [isAssignmentFormDirty, setIsAssignmentFormDirty] = useState(false);
 
   useEffect(() => {
     if (userId) void dispatch(fetchAdminUser(userId));
@@ -70,6 +76,7 @@ export function AdminUserDetailPage() {
 
   return (
     <section className={styles.page}>
+      <UnsavedChangesGuard when={isUserFormDirty || isAssignmentFormDirty} />
       <Link to="/admin/users">Назад к пользователям</Link>
       <div className={styles.heading}>
         <h1>{user.name}</h1>
@@ -83,6 +90,7 @@ export function AdminUserDetailPage() {
           user={user}
           isSelf={sessionUser?.id === user.id}
           onSubmit={handleSave}
+          onDirtyChange={setIsUserFormDirty}
         />
       </section>
       <section>
@@ -91,6 +99,7 @@ export function AdminUserDetailPage() {
           key={user.id}
           userId={user.id}
           assignments={user.assignments}
+          onDirtyChange={setIsAssignmentFormDirty}
         />
       </section>
       <section>

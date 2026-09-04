@@ -23,9 +23,15 @@ import styles from "./AssignmentForm.module.css";
 type AssignmentFormProps = {
   userId: string;
   assignments: Assignment[];
+  /** Lets the page know there is unsaved input, so it can refuse to leave it behind. */
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
-export function AssignmentForm({ userId, assignments }: AssignmentFormProps) {
+export function AssignmentForm({
+  userId,
+  assignments,
+  onDirtyChange,
+}: AssignmentFormProps) {
   const dispatch = useAppDispatch();
   const courses = useAppSelector((state) => state.adminUsers.assignableCourses);
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -43,6 +49,11 @@ export function AssignmentForm({ userId, assignments }: AssignmentFormProps) {
   useEffect(() => {
     void dispatch(fetchAssignableCourses());
   }, [dispatch]);
+
+  const { isDirty, isSubmitting } = form.formState;
+  useEffect(() => {
+    onDirtyChange?.(isDirty && !isSubmitting);
+  }, [isDirty, isSubmitting, onDirtyChange]);
 
   const submit = form.handleSubmit(async (body) => {
     setGeneralError(null);
