@@ -226,6 +226,16 @@ seed` unless the prompt asks for it. Do not start `npm run dev`. Do not open a
 browser for any reason — not to check a screen, not to confirm a route, not to
 watch a state. There is no exception for looking just once to be sure.
 
+**One exception, and only when the prompt names it: a scripted end-to-end run.**
+`npm run test:e2e` drives a headless browser and prints one line per scenario.
+That is a gate, not an observation: nothing from the page reaches you except the
+assertion messages of the scenarios that failed. When a prompt puts it in the
+gate you may run it, and it may start the servers and seed the database it needs
+— the only case where you start a server. Still forbidden: `--headed`, `--ui`,
+`--debug`, taking a screenshot, and opening a trace or the HTML report. A red
+scenario is diagnosed from its assertion message and the code, exactly like a
+red unit test.
+
 **The developer's — everything that needs the application running.** They have
 it open already and pay nothing to click. Your work is to make their pass short
 and exact: end the self-report with a numbered checklist under `## Проверить
