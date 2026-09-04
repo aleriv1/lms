@@ -89,6 +89,12 @@ Seven cases, each named after the behaviour, not the implementation:
    router. This is the regression test for the stale-block release effect;
    without it a form saved from under an open dialog leaves the dialog stuck.
 
+   **Corrected by the review of this slice: «the navigation is released» was
+   wrong.** The guard calls `blocker.reset()`, which returns the blocker to
+   `unblocked` and leaves the user where they are — the click that opened the
+   dialog is dropped, not replayed. Codex was right to stop rather than edit
+   the component; the case now asserts what `reset()` means.
+
 Then one `beforeunload` case, in the same file: dispatch
 `new Event("beforeunload", { cancelable: true })` on `window` and assert
 `defaultPrevented` is true while `when` is true, and false after `when` turns
