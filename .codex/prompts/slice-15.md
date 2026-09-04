@@ -54,8 +54,13 @@ Change (these only):
 
 - `package.json` at the root — add `@playwright/test` **1.62.1** to
   `devDependencies` and a `test:e2e` script. **Do not add e2e to `npm run
-  test`.** That script must stay fast and must keep working with no Docker and
-  no database, because it is the gate of every other slice.
+  test`.** That script must stay fast and must not grow a browser download.
+  **Corrected by the review of this slice: «must keep working with no Docker and
+  no database» was wrong**, and the prompt asserted it without the `grep` that
+  README line 79 would have answered — the server suite connects to a real
+  MongoDB through `connectTestDatabase`, and it did so long before this slice.
+  The requirement that was meant is the one Codex actually checked: e2e must not
+  leak into `npm run test`.
 - `.gitignore` — `playwright-report/`, `test-results/`, and whatever else the
   run drops.
 
@@ -124,8 +129,10 @@ covers all of these.
    the field and reload again: no browser dialog fires. Typing is the user
    gesture Chromium requires before it will show that prompt — if the first
    assertion cannot be made honestly, say so in the report and drop the case
-   rather than asserting on a listener. Retires slice-14 item 1 and the reload
-   half of slice-13-client item 2.
+   rather than asserting on a listener. Retires the reload half of
+   slice-13-client item 2. **Corrected by the review of this slice: slice-14
+   item 1 names `/profile/edit`, which this scenario does not open** — it proves
+   the shared mechanism on the course form, and the profile page stays manual.
 3. **A saved lesson stops asking.** Open the seeded course, then one of its
    lessons from the outline, change the title, click «Назад к курсу» → dialog →
    «Остаться». Save, wait for the success message, click «Назад к курсу» again →
@@ -161,7 +168,9 @@ wiring: that the server's review reaches that component through a real attempt.
    correct option, submit → «Верно», and that option carries both labels.
 3. **An empty submission says so.** «Пройти ещё раз», submit with nothing
    chosen, confirm the dialog the form raises → «Вы не ответили», and the
-   correct option is still marked. Retires slice-13-client items 8–10.
+   correct option is still marked. Retires slice-13-client items 8–9.
+   **Corrected by the review of this slice: item 10 is the multiple-choice test
+   and no scenario here reaches it; it stays manual.**
 
 ### C. `e2e/offline.spec.ts` — as `student@lms.local`
 
@@ -208,8 +217,10 @@ mandatory and must cover at least:
 
 - every scenario above: present and green, or dropped with the reason;
 - for each one, which numbered items of which earlier report it retires;
-- that `npm run test` still passes with Docker stopped, i.e. e2e did not leak
-  into the unit gate — check it, do not assume it;
+- that e2e did not leak into `npm run test` — the script's own diff, and the
+  gate's own run with MongoDB up. **Corrected by the review of this slice: the
+  original wording, «still passes with Docker stopped», asked for a check of a
+  condition that never held.**
 - that no file outside the list under «Files» changed (`git diff --stat` against
   the commit before yours);
 - the resolved version of `@playwright/test` and of the Chromium it installed.
