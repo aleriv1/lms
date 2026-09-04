@@ -6,10 +6,9 @@ gate, not an observation, and it is the one case where you may start servers.
 No `--headed`, no `--ui`, no screenshots, no trace viewer, no HTML report.
 
 Slice 15 turned about seventeen of the twenty-five accumulated manual checks
-into ten scenarios. This slice takes the rest of the automatable ones. After it,
-exactly two things stay manual for the life of the project: **closing a tab**
-(Playwright cannot raise that browser dialog honestly) and **WCAG measurement**,
-which is a different kind of work. There is no slice 17 of this shape.
+into ten scenarios. This slice takes every one that is left. After it the manual
+list holds exactly one item, **WCAG measurement**, which is a different kind of
+work. There is no slice 17 of this shape.
 
 **Do not change any component, slice, route or server file.** If a scenario
 cannot be written without changing one, stop and hand it back: that is a defect
@@ -155,8 +154,15 @@ Retires item 5 of the slice-15 checklist (slice-13-client item 10).
    the input. Discard by reloading, then type only into «Новый пароль» → one
    dialog again. Discard, then dirty both blocks → still exactly one dialog, and
    «Остаться» keeps both inputs. Assert the count, not just the visibility.
-   Retires the rest of slice-15 item 6 (slice-13-client item 6), except closing
-   the tab.
+   Retires the rest of slice-15 item 6 (slice-13-client item 6).
+3. **Closing the tab asks too.** Dirty the name field again, then
+   `page.close({ runBeforeUnload: true })` with a `dialog` listener attached.
+   Without that flag Chromium skips the handler entirely, which is why this case
+   looked impossible before. Dismiss the dialog → `page.isClosed()` is false and
+   the typed name is still there. Accept it on a second close → the page closes.
+   Use a page you made yourself (`browser.newContext()`), not the fixture's, so
+   closing it does not fight the fixture teardown. Retires the tab-close half of
+   slice-13-client item 2 and of slice-15 item 6.
 
 ### F. `e2e/unsaved-changes.spec.ts` — one added test, as `admin@lms.local`
 
@@ -205,9 +211,6 @@ published again.
 ## What this slice does not do
 
 - **No rate-limit scenario.** See the first section.
-- **No tab-close scenario.** Playwright's `page.close()` does not raise the
-  browser's own leave prompt, and asserting on a registered listener is not a
-  check. It stays manual, permanently, and the report says so.
 - **No WCAG.** Contrast and keyboard traversal are a measurement, and a
   Playwright pass would only look like one.
 - **No visual diffing, no screenshot assertions.**
@@ -241,6 +244,5 @@ mandatory and must cover at least:
   before yours);
 - each of the five seed facts above, confirmed against `seed.ts` or corrected.
 
-End with `## Проверить руками` naming what is still manual: closing a tab, the
-successful retry of scenario G, and WCAG. Nothing else should be left on that
-list. One commit, no push, no amend.
+End with `## Проверить руками` naming what is still manual: the successful retry
+of scenario G, and WCAG. Nothing else should be left on that list. One commit, no push, no amend.
