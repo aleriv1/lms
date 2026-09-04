@@ -2,6 +2,65 @@ import { expect, test } from "@playwright/test";
 
 import { login } from "./helpers/auth";
 
+test("a lesson survives a failed offline completion without losing its material", async ({
+  page,
+  context,
+}) => {
+  const crashes: string[] = [];
+  page.on("pageerror", (error) => crashes.push(error.message));
+  await login(page, "student@lms.local");
+  await page
+    .getByRole("article")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "Правила технической эксплуатации",
+        exact: true,
+      }),
+    })
+    .getByRole("link", { name: "Продолжить", exact: true })
+    .click();
+  const courseUrl = page.url();
+  const lessonTitle = "Журнал осмотров: как заполнять";
+  await page.getByRole("link", { name: lessonTitle, exact: true }).click();
+  const lessonUrl = page.url();
+  const material = page.getByText(
+    "Записывайте результаты сразу после осмотра. Укажите время, выявленные неисправности и принятые меры.",
+    { exact: true },
+  );
+  const complete = page.getByRole("button", {
+    name: "Завершить урок",
+    exact: true,
+  });
+  await expect(material).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Состояние:" }),
+  ).toHaveText("Состояние: В процессе");
+  await context.setOffline(true);
+  try {
+    await complete.click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(material).toBeVisible();
+    await expect(page).toHaveURL(lessonUrl);
+    await expect(page).not.toHaveURL("/forbidden");
+    await context.setOffline(false);
+    await page
+      .getByRole("link", { name: "Вернуться к курсу", exact: true })
+      .click();
+    await expect(page).toHaveURL(courseUrl);
+    await page.getByRole("link", { name: lessonTitle, exact: true }).click();
+    await expect(page).toHaveURL(lessonUrl);
+    await expect(material).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(complete).toBeEnabled();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Состояние:" }),
+    ).toHaveText("Состояние: В процессе");
+    expect(crashes).toEqual([]);
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
 test("learning recovers from a dead network using retry", async ({
   page,
   context,

@@ -9,6 +9,14 @@ export default defineConfig({
   fullyParallel: false,
   reporter: "list",
   retries: 0,
+  projects: [
+    { name: "main", testIgnore: /archive-race\.spec\.ts/ },
+    {
+      name: "isolated",
+      testMatch: /archive-race\.spec\.ts/,
+      dependencies: ["main"],
+    },
+  ],
   use: {
     browserName: "chromium",
     baseURL: "http://localhost:5273",

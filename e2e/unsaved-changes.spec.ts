@@ -177,6 +177,51 @@ test("one guard covers both forms on the user page", async ({ page }) => {
   await expect(guard(page)).toHaveCount(0);
 });
 
+test("both user blocks share one guard and discarding creates no assignment", async ({
+  page,
+}) => {
+  await page.goto("/admin/users");
+  await page
+    .getByRole("searchbox", { name: "Поиск по имени или email" })
+    .fill("student@lms.local");
+  await page
+    .getByRole("row")
+    .filter({ hasText: "student@lms.local" })
+    .getByRole("link", { name: "Открыть карточку" })
+    .click();
+  const userUrl = page.url();
+  const name = page.getByRole("textbox", { name: "Имя *", exact: true });
+  const course = page.getByRole("combobox", { name: "Опубликованный курс" });
+  const assignments = page.getByRole("table", {
+    name: "Назначения пользователя",
+  });
+  const dispatchCourse = "Работа с диспетчерской системой";
+  await expect(assignments.getByRole("row")).toHaveCount(4);
+  await expect(
+    assignments.getByRole("cell", { name: dispatchCourse, exact: true }),
+  ).toHaveCount(0);
+  await name.fill(`${learnerName} — изменено`);
+  await course.selectOption({ label: dispatchCourse });
+  const selectedCourse = await course.inputValue();
+  expect(selectedCourse).toBeTruthy();
+  await page.getByRole("link", { name: "Назад к пользователям" }).click();
+  await expect(guard(page)).toHaveCount(1);
+  await guard(page).getByRole("button", { name: "Остаться" }).click();
+  await expect(guard(page)).toHaveCount(0);
+  await expect(page).toHaveURL(userUrl);
+  await expect(name).toHaveValue(`${learnerName} — изменено`);
+  await expect(course).toHaveValue(selectedCourse);
+  await reloadDiscardingChanges(page);
+  await expect(course).toHaveValue("");
+  await expect(assignments.getByRole("row")).toHaveCount(4);
+  await expect(
+    assignments.getByRole("cell", { name: dispatchCourse, exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "Назад к пользователям" }).click();
+  await expect(page).toHaveURL("/admin/users");
+  await expect(guard(page)).toHaveCount(0);
+});
+
 test("signing out of a dirty form does not ask or restore the admin session", async ({
   page,
 }) => {
