@@ -88,6 +88,14 @@ Change:
 Do not add a dependency. `react-router-dom` 7 already exports
 `createBrowserRouter`, `createMemoryRouter`, `RouterProvider` and `useBlocker`.
 
+**If the gate turns up a file this list forgot, fix it minimally and name it in
+the report — do not stop.** The list is written by someone reading, and reading
+misses fixtures: the server half of this slice was handed a list missing
+`server/src/contracts/sharedContracts.test.ts`, and the cheap answer was one
+line plus a line in the report. That licence covers a test fixture or an import
+the change makes stale. It does not cover a new decision: an architectural
+choice still stops the slice.
+
 ## Decisions already made — implement, do not reconsider
 
 ### 1. The router
@@ -147,7 +155,7 @@ const blocker = useBlocker(
 );
 ```
 
-Three parts of that condition, each for a reason:
+Two filters on top of `when`, each for a reason:
 
 - `currentLocation.pathname !== nextLocation.pathname` — a filter or a page
   number written into the query string of the same page is not leaving it.
@@ -182,7 +190,10 @@ For every React Hook Form form:
 <UnsavedChangesGuard when={form.formState.isDirty && !form.formState.isSubmitting} />
 ```
 
-placed as the first child inside the `<form>` element.
+placed as the first child inside the `<form>` element — except on
+`ProfileEditPage`, which has two forms and gets one guard outside both, as the
+first child of the `<div className={styles.forms}>`. Where the two rules would
+disagree, this sentence wins.
 
 `isSubmitting` is what lets a successful save through. Every page in this
 project navigates **inside** its `onSubmit` — see `CourseCreatePage` — so the
