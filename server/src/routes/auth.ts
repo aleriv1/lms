@@ -25,6 +25,7 @@ import { validate } from "../middleware/validate.js";
 import {
   clearFailedLogins,
   loginRateLimit,
+  loginRateLimitedByEmail,
   recordFailedLogin,
 } from "../middleware/loginRateLimit.js";
 import { toPublicUser, User } from "../models/User.js";
@@ -112,11 +113,16 @@ authRouter.post(
       const isPasswordValid = await verifyPassword(body.password, passwordHash);
 
       if (!user || !isPasswordValid) {
+        // Asked before the failure is recorded, so the fifth wrong password is
+        // still an ordinary 401 and the sixth request is the refused one.
+        const refused = loginRateLimitedByEmail(request, response);
         recordFailedLogin(request);
-        next(invalidCredentials());
+        next(refused ?? invalidCredentials());
         return;
       }
 
+      // The password was right, so nothing below this line throttles: the
+      // account counter exists to slow guessing, not to lock out the owner.
       clearFailedLogins(request);
 
       if (user.status === "blocked") {
@@ -127,7 +133,6 @@ authRouter.post(
       }
 
       if (user.status === "archived") {
-        recordFailedLogin(request);
         next(invalidCredentials());
         return;
       }

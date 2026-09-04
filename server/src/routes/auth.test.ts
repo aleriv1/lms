@@ -43,6 +43,26 @@ describe("authentication over HTTP", () => {
     expect(Number(refused.headers["retry-after"])).toBeGreaterThan(0);
   });
 
+  it("signs the owner in while the account counter is full", async () => {
+    const user = await createUser();
+    const agent = api();
+    for (let index = 0; index < 6; index += 1) {
+      await agent
+        .post("/api/auth/login")
+        .send({ email: user.email, password: "WrongPassword1" })
+        .expect(index < 5 ? 401 : 429);
+    }
+    // Nobody can lock the owner out of their own account by guessing at it.
+    await agent
+      .post("/api/auth/login")
+      .send({ email: user.email, password: TEST_PASSWORD })
+      .expect(200);
+    await agent
+      .post("/api/auth/login")
+      .send({ email: user.email, password: "WrongPassword1" })
+      .expect(401);
+  });
+
   it("clears failures after a correct password", async () => {
     const user = await createUser();
     const agent = api();
