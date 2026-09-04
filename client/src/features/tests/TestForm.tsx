@@ -16,6 +16,7 @@ import { useFieldArray, useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 
 import type { FormError } from "../../api/formError";
+import { UnsavedChangesGuard } from "../../routes/UnsavedChangesGuard";
 import { Button, Input, Select } from "../../components/ui";
 import { QuestionFieldset } from "./QuestionFieldset";
 import { canMoveQuestion, renumberQuestions } from "./questionOrdering";
@@ -124,6 +125,9 @@ export function TestForm({
 
   return (
     <form className={styles.form} noValidate onSubmit={submit}>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !form.formState.isSubmitting}
+      />
       <fieldset className={styles.fields} disabled={isSubmitting}>
         <legend className={styles.legend}>Параметры теста и вопросы</legend>
         <Input

@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 
 import { toFormError, type FormError } from "../../api/formError";
 import { Button, EmptyState, Modal, ProgressBar } from "../../components/ui";
+import { UnsavedChangesGuard } from "../../routes/UnsavedChangesGuard";
 import styles from "./TestAttemptForm.module.css";
 
 export type TestAttemptFormProps = {
@@ -119,6 +120,7 @@ export function TestAttemptForm({ test, onSubmit }: TestAttemptFormProps) {
         void submit();
       }}
     >
+      <UnsavedChangesGuard when={answeredCount > 0 && !isSending} />
       <p role="status">
         Вопрос {questionIndex + 1} из {test.questions.length}
       </p>

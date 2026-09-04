@@ -11,6 +11,7 @@ import { useFieldArray, useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 
 import type { FormError } from "../../api/formError";
+import { UnsavedChangesGuard } from "../../routes/UnsavedChangesGuard";
 import { Button, Checkbox, Input, Textarea } from "../../components/ui";
 import styles from "./LessonForm.module.css";
 
@@ -80,6 +81,9 @@ export function LessonForm({
 
   return (
     <form className={styles.form} noValidate onSubmit={submit}>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !form.formState.isSubmitting}
+      />
       <Input
         label="Название"
         isRequired

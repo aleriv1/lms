@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   NavLink,
   Outlet,
@@ -12,7 +12,7 @@ import { Button, Loader } from "../ui";
 import styles from "./AppLayout.module.css";
 import { getNavItems, isNavItemActive, ROLE_LABELS } from "./navItems";
 
-export function AppLayout() {
+export function AppLayout({ children }: { children?: ReactNode }) {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ export function AppLayout() {
         </Button>
       </aside>
       <main className={styles.content}>
-        <Outlet />
+        {children ?? <Outlet />}
       </main>
     </div>
   );

@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 
 import { Button, Input, Loader } from "../components/ui";
 import { changePassword, updateProfile } from "../features/auth/authSlice";
+import { UnsavedChangesGuard } from "../routes/UnsavedChangesGuard";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import styles from "./ProfileEditPage.module.css";
 
@@ -96,6 +97,14 @@ export function ProfileEditPage() {
       </Link>
       <h1>Редактирование профиля</h1>
       <div className={styles.forms}>
+        <UnsavedChangesGuard
+          when={
+            (profileForm.formState.isDirty &&
+              !profileForm.formState.isSubmitting) ||
+            (passwordForm.formState.isDirty &&
+              !passwordForm.formState.isSubmitting)
+          }
+        />
         <form className={styles.form} noValidate onSubmit={submitProfile}>
           <h2>Личные данные</h2>
           <Input

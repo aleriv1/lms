@@ -7,7 +7,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import type { FormError } from "../../api/formError";
@@ -47,11 +47,10 @@ const test = learnerTestSchema.parse({
 describe("TestAttemptForm", () => {
   it("keeps single and multiple answers when navigating in both directions", async () => {
     const onSubmit = vi.fn().mockResolvedValue(null);
-    render(
-      <MemoryRouter>
-        <TestAttemptForm test={test} onSubmit={onSubmit} />
-      </MemoryRouter>,
-    );
+    const router = createMemoryRouter([
+      { path: "/", element: <TestAttemptForm test={test} onSubmit={onSubmit} /> },
+    ]);
+    render(<RouterProvider router={router} />);
 
     fireEvent.click(
       screen.getByRole("radio", { name: "Проверить оборудование" }),
@@ -95,11 +94,10 @@ describe("TestAttemptForm", () => {
 
   it("counts unanswered questions and sends all entries only after confirmation", async () => {
     const onSubmit = vi.fn().mockResolvedValue(null);
-    render(
-      <MemoryRouter>
-        <TestAttemptForm test={test} onSubmit={onSubmit} />
-      </MemoryRouter>,
-    );
+    const router = createMemoryRouter([
+      { path: "/", element: <TestAttemptForm test={test} onSubmit={onSubmit} /> },
+    ]);
+    render(<RouterProvider router={router} />);
     fireEvent.click(screen.getByRole("button", { name: "Далее" }));
     const submit = screen.getByRole("button", { name: "Отправить ответы" });
     await waitFor(() => expect(submit).toBeEnabled());
@@ -125,11 +123,10 @@ describe("TestAttemptForm", () => {
 
   it("blocks double clicks and a direct submit event while the request is pending", async () => {
     const onSubmit = vi.fn(() => new Promise<FormError | null>(() => {}));
-    render(
-      <MemoryRouter>
-        <TestAttemptForm test={test} onSubmit={onSubmit} />
-      </MemoryRouter>,
-    );
+    const router = createMemoryRouter([
+      { path: "/", element: <TestAttemptForm test={test} onSubmit={onSubmit} /> },
+    ]);
+    render(<RouterProvider router={router} />);
     fireEvent.click(
       screen.getByRole("radio", { name: "Проверить оборудование" }),
     );

@@ -9,6 +9,7 @@ import { useForm, type FieldPath } from "react-hook-form";
 import type { z } from "zod";
 
 import type { FormError } from "../../api/formError";
+import { UnsavedChangesGuard } from "../../routes/UnsavedChangesGuard";
 import { Button, Input, Select, Textarea } from "../../components/ui";
 import { COURSE_AUDIENCE_LABELS } from "./courseLabels";
 import styles from "./CourseForm.module.css";
@@ -65,6 +66,9 @@ export function CourseForm({
 
   return (
     <form className={styles.form} noValidate onSubmit={submit}>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !form.formState.isSubmitting}
+      />
       <Input
         label="Название"
         isRequired

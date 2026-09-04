@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { toFormError, type FormError } from "../api/formError";
 import { Button, EmptyState, ErrorState, Loader } from "../components/ui";
 import { TestAttemptForm } from "../features/learning/TestAttemptForm";
+import { AttemptReview } from "../features/learning/AttemptReview";
 import {
   clearAttemptResult,
   fetchLearnerTest,
@@ -184,6 +185,7 @@ function LearningTestScreen({ testId }: { testId: string }) {
           </p>
           <p>Попытка №{attempt.attemptNumber}</p>
           <p>{formatDateTime(attempt.submittedAt)}</p>
+          <AttemptReview review={attempt.review} />
           {attempt.passed && courseCompleted && (
             <p className={styles.success} role="status">
               Курс пройден
