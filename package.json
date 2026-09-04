@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "npm run test -w server && npm run test -w client",
+    "test:e2e": "playwright test",
     "dev": "concurrently -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
     "seed": "npm run seed -w server",
     "seed:reset": "npm run seed:reset -w server",
@@ -21,6 +22,7 @@
     "db:down": "docker compose down"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "concurrently": "^9.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
