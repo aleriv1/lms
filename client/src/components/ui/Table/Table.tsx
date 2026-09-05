@@ -38,7 +38,9 @@ export function Table<TRow>({
           {rows.map((row) => (
             <tr key={getRowKey(row)}>
               {columns.map((column) => (
-                <td key={column.key}>{column.render(row)}</td>
+                <td data-label={column.header} key={column.key}>
+                  {column.render(row)}
+                </td>
               ))}
             </tr>
           ))}

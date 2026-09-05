@@ -38,6 +38,12 @@
   border-radius: var(--radius-medium);
 }
 
+.filtersToggle.filtersToggle {
+  display: none;
+  width: 100%;
+  margin-bottom: var(--space-3);
+}
+
 .searchField {
   grid-column: 1 / -1;
 }
@@ -80,6 +86,14 @@
   border-radius: var(--radius-medium);
 }
 
+@media (max-width: 64rem) {
+  .rowActions a,
+  .rowActions button {
+    width: var(--control-height);
+    height: var(--control-height);
+  }
+}
+
 .rowActions button.dangerAction {
   color: var(--color-danger);
 }
@@ -113,8 +127,17 @@
     flex-direction: column;
   }
 
+  .filtersToggle.filtersToggle {
+    display: inline-flex;
+  }
+
   .filters {
+    display: none;
     grid-template-columns: 1fr;
+  }
+
+  .filtersOpen {
+    display: grid;
   }
 
   .ownCheckbox {

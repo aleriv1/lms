@@ -128,6 +128,8 @@ function DebouncedFilterInput({
   );
 }
 
+const FILTERS_ID = "course-filters";
+
 export function CourseListPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
@@ -140,6 +142,7 @@ export function CourseListPage() {
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [actionError, setActionError] = useState<FormError | null>(null);
+  const [areFiltersOpen, setAreFiltersOpen] = useState(false);
   const updateQuery = useCallback(
     (changes: Partial<CoursesQuery>, keepPage = false) => {
       setSearchParams((currentParams) => {
@@ -337,7 +340,20 @@ export function CourseListPage() {
         </Link>
       </div>
 
-      <div className={styles.filters}>
+      <Button
+        className={styles.filtersToggle}
+        variant="secondary"
+        aria-controls={FILTERS_ID}
+        aria-expanded={areFiltersOpen}
+        onClick={() => setAreFiltersOpen((value) => !value)}
+      >
+        Фильтры
+      </Button>
+
+      <div
+        className={`${styles.filters} ${areFiltersOpen ? styles.filtersOpen : ""}`}
+        id={FILTERS_ID}
+      >
         <div className={styles.searchField}>
           <DebouncedFilterInput
             key={`search-${query.search ?? ""}`}
