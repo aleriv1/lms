@@ -2,20 +2,29 @@ import type { PublicUser, UserRole } from "@lms/shared";
 
 export type NavItem = { to: string; label: string };
 
+/**
+ * Specification 4.3 lets an administrator assign a course to any active user,
+ * and the learning API checks the assignment rather than the role
+ * (`learningRouter.use(requireAuth)` with no `requireRole`). So «Мое обучение»
+ * belongs to every role: a teacher or an administrator who was assigned a
+ * course had the progress on their profile but no way in to earn it.
+ */
+const LEARNING_ITEM: NavItem = { to: "/learning", label: "Мое обучение" };
+const PROFILE_ITEM: NavItem = { to: "/profile", label: "Личный кабинет" };
+
 const NAV_ITEMS: Record<UserRole, NavItem[]> = {
-  student: [
-    { to: "/learning", label: "Мое обучение" },
-    { to: "/profile", label: "Личный кабинет" },
-  ],
+  student: [LEARNING_ITEM, PROFILE_ITEM],
   teacher: [
     { to: "/manage/courses", label: "Каталог курсов" },
-    { to: "/profile", label: "Личный кабинет" },
+    LEARNING_ITEM,
+    PROFILE_ITEM,
   ],
   admin: [
     { to: "/admin", label: "Главная" },
     { to: "/manage/courses", label: "Каталог курсов" },
     { to: "/admin/users", label: "Пользователи" },
-    { to: "/profile", label: "Личный кабинет" },
+    LEARNING_ITEM,
+    PROFILE_ITEM,
   ],
 };
 
@@ -34,7 +43,10 @@ export function getNavItems(user: PublicUser): NavItem[] {
 
   return items.flatMap((item) =>
     item.to === "/manage/courses"
-      ? [item, { to: `/manage/courses?authorId=${user.id}`, label: "Мои курсы" }]
+      ? [
+          item,
+          { to: `/manage/courses?authorId=${user.id}`, label: "Мои курсы" },
+        ]
       : [item],
   );
 }

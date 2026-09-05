@@ -53,7 +53,7 @@ export function ProfileStatistics() {
           </dl>
           <section>
             <h3>Активные и завершенные курсы</h3>
-            <CourseStatisticsTable courses={me.data.courses} />
+            <CourseStatisticsTable courses={me.data.courses} linkCourses />
           </section>
           <section>
             <h3>Результаты тестов</h3>
