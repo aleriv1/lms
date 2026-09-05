@@ -38,27 +38,50 @@
   border-radius: var(--radius-medium);
 }
 
+.searchField {
+  grid-column: 1 / -1;
+}
+
+.sortField {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.sortField > *:first-child {
+  flex: 1;
+}
+
 .orderButton {
-  width: 100%;
+  flex: 0 0 auto;
+  width: var(--control-height);
+  padding: var(--space-0);
 }
 
 .ownCheckbox {
-  margin-bottom: var(--space-3);
+  align-self: center;
 }
 
 .rowActions {
-  align-items: flex-start;
-  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
 }
 
-.rowActions a {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-medium);
-}
-
+.rowActions a,
 .rowActions button {
+  display: inline-flex;
   min-height: auto;
-  padding: var(--space-1) var(--space-0);
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-0);
+  color: var(--color-primary);
+  border-radius: var(--radius-medium);
+}
+
+.rowActions button.dangerAction {
+  color: var(--color-danger);
 }
 
 .actionError {
@@ -92,5 +115,9 @@
 
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .ownCheckbox {
+    align-self: flex-start;
   }
 }

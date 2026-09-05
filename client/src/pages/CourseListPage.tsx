@@ -7,6 +7,7 @@ import {
   type CoursesQuery,
 } from "@lms/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import type { FormError } from "../api/formError";
@@ -95,6 +96,7 @@ function ActionError({ error }: { error: FormError }) {
 type DebouncedFilterInputProps = {
   initialValue: string;
   label: string;
+  placeholder?: string;
   type?: "search";
   onDebouncedChange: (value: string) => void;
 };
@@ -102,6 +104,7 @@ type DebouncedFilterInputProps = {
 function DebouncedFilterInput({
   initialValue,
   label,
+  placeholder,
   type,
   onDebouncedChange,
 }: DebouncedFilterInputProps) {
@@ -117,6 +120,7 @@ function DebouncedFilterInput({
   return (
     <Input
       label={label}
+      placeholder={placeholder}
       type={type}
       value={value}
       onChange={(event) => setValue(event.target.value)}
@@ -261,38 +265,51 @@ export function CourseListPage() {
       render: (course) =>
         canEditCourse(user, course) ? (
           <div className={styles.rowActions}>
-            <Link to={`/manage/courses/${course.id}/edit`}>Редактировать</Link>
+            <Link
+              aria-label="Редактировать"
+              title="Редактировать"
+              to={`/manage/courses/${course.id}/edit`}
+            >
+              <EditIcon />
+            </Link>
             {course.status !== "published" && (
               <Button
                 variant="ghost"
+                aria-label="Опубликовать"
+                title="Опубликовать"
                 disabled={isActionLoading}
                 onClick={() => void performPublish(course.id)}
               >
-                Опубликовать
+                <PublishIcon />
               </Button>
             )}
             {course.status !== "archived" && (
               <Button
                 variant="ghost"
+                aria-label="Архивировать"
+                title="Архивировать"
                 disabled={isActionLoading}
                 onClick={() => {
                   setActionError(null);
                   setConfirmation({ action: "archive", course });
                 }}
               >
-                Архивировать
+                <ArchiveIcon />
               </Button>
             )}
             {course.status === "draft" && (
               <Button
+                className={styles.dangerAction}
                 variant="ghost"
+                aria-label="Удалить"
+                title="Удалить"
                 disabled={isActionLoading}
                 onClick={() => {
                   setActionError(null);
                   setConfirmation({ action: "delete", course });
                 }}
               >
-                Удалить
+                <TrashIcon />
               </Button>
             )}
           </div>
@@ -321,13 +338,16 @@ export function CourseListPage() {
       </div>
 
       <div className={styles.filters}>
-        <DebouncedFilterInput
-          key={`search-${query.search ?? ""}`}
-          label="Поиск"
-          type="search"
-          initialValue={query.search ?? ""}
-          onDebouncedChange={updateSearch}
-        />
+        <div className={styles.searchField}>
+          <DebouncedFilterInput
+            key={`search-${query.search ?? ""}`}
+            label="Поиск"
+            type="search"
+            placeholder="Название курса"
+            initialValue={query.search ?? ""}
+            onDebouncedChange={updateSearch}
+          />
+        </div>
         <DebouncedFilterInput
           key={`category-${query.category ?? ""}`}
           label="Категория"
@@ -356,25 +376,33 @@ export function CourseListPage() {
             })
           }
         />
-        <Select
-          label="Сортировка"
-          options={sortOptions}
-          value={query.sortBy}
-          onChange={(event) =>
-            updateQuery({ sortBy: event.target.value as CoursesQuery["sortBy"] })
-          }
-        />
-        <Button
-          className={styles.orderButton}
-          variant="secondary"
-          onClick={() =>
-            updateQuery({
-              sortOrder: query.sortOrder === "asc" ? "desc" : "asc",
-            })
-          }
-        >
-          {query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"}
-        </Button>
+        <div className={styles.sortField}>
+          <Select
+            label="Сортировка"
+            options={sortOptions}
+            value={query.sortBy}
+            onChange={(event) =>
+              updateQuery({
+                sortBy: event.target.value as CoursesQuery["sortBy"],
+              })
+            }
+          />
+          <Button
+            className={styles.orderButton}
+            variant="secondary"
+            aria-label={
+              query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"
+            }
+            title={query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"}
+            onClick={() =>
+              updateQuery({
+                sortOrder: query.sortOrder === "asc" ? "desc" : "asc",
+              })
+            }
+          >
+            <SortOrderIcon ascending={query.sortOrder === "asc"} />
+          </Button>
+        </div>
         <Checkbox
           className={styles.ownCheckbox}
           label="Только мои курсы"
@@ -467,5 +495,86 @@ export function CourseListPage() {
         {actionError && <ActionError error={actionError} />}
       </Modal>
     </section>
+  );
+}
+
+function SortOrderIcon({ ascending }: { ascending: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {ascending ? (
+        <path d="M12 19V5m0 0-6 6m6-6 6 6" />
+      ) : (
+        <path d="M12 5v14m0 0 6-6m-6 6-6-6" />
+      )}
+    </svg>
+  );
+}
+
+function ActionIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <ActionIcon>
+      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+      <path d="M13.5 6.5l4 4" />
+    </ActionIcon>
+  );
+}
+
+function PublishIcon() {
+  return (
+    <ActionIcon>
+      <path d="M12 16V4m0 0-4 4m4-4 4 4" />
+      <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </ActionIcon>
+  );
+}
+
+function ArchiveIcon() {
+  return (
+    <ActionIcon>
+      <path d="M3 6h18v3H3z" />
+      <path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9" />
+      <path d="M10 13h4" />
+    </ActionIcon>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <ActionIcon>
+      <path d="M4 7h16" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </ActionIcon>
   );
 }
