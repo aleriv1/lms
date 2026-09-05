@@ -1,0 +1,89 @@
+/* The rail takes the space the sticky sidebar has left and hands the squeeze to
+   the lesson list: a long course scrolls there instead of pushing «Выйти» out
+   of the sidebar or over the last lesson. */
+.rail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.exit {
+  color: var(--color-text-muted);
+}
+
+.courseTitle {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.navigation {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-0);
+  padding: var(--space-0);
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+  border-left: 0.125rem solid var(--color-transparent);
+}
+
+a.item:hover {
+  background: var(--color-surface-subtle);
+}
+
+/* The coloured spine down the left edge is how far the learner has come. */
+.completed,
+.current {
+  border-left-color: var(--color-primary);
+}
+
+.current {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-surface-subtle);
+}
+
+.locked {
+  color: var(--color-text-muted);
+}
+
+.order {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.current .order {
+  color: inherit;
+}
+
+.duration {
+  grid-column: 2;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.state {
+  position: absolute;
+  width: 0.0625rem;
+  height: 0.0625rem;
+  padding: var(--space-0);
+  margin: -0.0625rem;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

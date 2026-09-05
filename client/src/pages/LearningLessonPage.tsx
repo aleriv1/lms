@@ -8,14 +8,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 
 import { toFormError, type FormError } from "../api/formError";
-import {
-  Button,
-  EmptyState,
-  ErrorState,
-  Loader,
-  ProgressBar,
-} from "../components/ui";
-import { LessonToc } from "../features/learning/LessonToc";
+import { Button, EmptyState, ErrorState, Loader } from "../components/ui";
 import { TestSummaryCard } from "../features/learning/TestSummaryCard";
 import {
   formatMinutes,
@@ -222,29 +215,37 @@ function LearningLessonScreen({
 
   return (
     <section className={styles.page}>
-      {courseLink}
       <header className={styles.heading}>
-        <p>{course.title}</p>
+        {/* One line does the breadcrumb and the course name at once; the
+            course progress lives in the rail. */}
+        <Link
+          className={styles.back}
+          to={`/learning/courses/${courseId}`}
+          aria-label={`Вернуться к курсу: ${course.title}`}
+        >
+          ← {course.title}
+        </Link>
         <h1>{lesson.title}</h1>
-        <p>
+        <p className={styles.meta}>
           Урок {lesson.order} · {formatMinutes(lesson.durationMinutes)} ·{" "}
-          {lesson.isRequired ? "Обязательный" : "Необязательный"}
-        </p>
-        <p role="status">
-          Состояние: {LESSON_PROGRESS_STATUS_LABELS[lesson.progressStatus]}
+          {lesson.isRequired ? "Обязательный" : "Необязательный"} ·{" "}
+          <span role="status">
+            {/* The word is redundant beside the other three facts, but it is
+                what a screen reader needs to make sense of the announcement. */}
+            <span className={styles.hidden}>Состояние: </span>
+            {LESSON_PROGRESS_STATUS_LABELS[lesson.progressStatus]}
+          </span>
         </p>
       </header>
-      <ProgressBar
-        value={lesson.courseProgressPercent}
-        label="Прогресс курса"
-      />
       {course.courseStatus === "archived" && (
         <p className={styles.notice}>
           Курс в архиве: доступен только для просмотра
         </p>
       )}
       <section className={styles.material}>
-        <h2>Материал урока</h2>
+        {/* The lesson title already heads its own material; a second visible
+            heading is what made this read as one card among many. */}
+        <h2 className={styles.hidden}>Материал урока</h2>
         {/* HTML sanitised on write in server/src/lessons/sanitizeContent.ts. */}
         <div
           className={styles.content}
@@ -284,43 +285,39 @@ function LearningLessonScreen({
         </section>
       )}
       {actionError && <ActionError error={actionError} courseId={course.id} />}
-      {!lesson.requiredTest && course.courseStatus !== "archived" && (
-        <div>
+      <div className={styles.actions}>
+        <nav className={styles.neighbours} aria-label="Навигация по урокам">
+          {lesson.previousLessonId !== null && (
+            <Link
+              to={`/learning/courses/${course.id}/lessons/${lesson.previousLessonId}`}
+            >
+              ← Предыдущий урок
+            </Link>
+          )}
+          {lesson.nextLessonId !== null && (
+            <Link
+              className={styles.next}
+              to={`/learning/courses/${course.id}/lessons/${lesson.nextLessonId}`}
+            >
+              Следующий урок →
+            </Link>
+          )}
+        </nav>
+        {!lesson.requiredTest && course.courseStatus !== "archived" && (
           <Button
             isLoading={isActionLoading}
             onClick={() => void handleComplete()}
           >
             Завершить урок
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       {courseCompleted && (
         <div className={styles.success} role="status">
           <p>Курс пройден</p>
           {courseLink}
         </div>
       )}
-      <nav className={styles.neighbours} aria-label="Навигация по урокам">
-        {lesson.previousLessonId !== null && (
-          <Link
-            to={`/learning/courses/${course.id}/lessons/${lesson.previousLessonId}`}
-          >
-            Предыдущий урок
-          </Link>
-        )}
-        {lesson.nextLessonId !== null && (
-          <Link
-            to={`/learning/courses/${course.id}/lessons/${lesson.nextLessonId}`}
-          >
-            Следующий урок
-          </Link>
-        )}
-      </nav>
-      <LessonToc
-        courseId={course.id}
-        lessons={course.lessons}
-        currentLessonId={lesson.id}
-      />
     </section>
   );
 }

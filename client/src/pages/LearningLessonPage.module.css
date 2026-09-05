@@ -1,7 +1,13 @@
+/* About seventy characters is the reading measure. The 72rem the layout hands
+   out is for tables, not for prose, and it does not change when the course rail
+   collapses: collapsing removes distraction, not margins. */
 .page {
   display: grid;
   gap: var(--space-5);
+  width: 100%;
+  max-width: 46rem;
   min-width: 0;
+  margin-inline: auto;
   overflow-wrap: anywhere;
 }
 
@@ -15,21 +21,34 @@
   margin: var(--space-0);
 }
 
+.back,
+.meta {
+  color: var(--color-text-muted);
+}
+
 .material {
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-6);
   background: var(--color-surface);
   border: 0.0625rem solid var(--color-border);
   border-radius: var(--radius-medium);
 }
 
-.material h2 {
-  margin-top: var(--space-0);
+.hidden {
+  position: absolute;
+  width: 0.0625rem;
+  height: 0.0625rem;
+  padding: var(--space-0);
+  margin: -0.0625rem;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .content {
   overflow-x: auto;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .content p {
@@ -63,10 +82,27 @@
   gap: var(--space-2);
 }
 
-.neighbours {
+/* The complete button and the neighbouring lessons are one decision, so they
+   are one row: neighbours at the edges they point to, the primary action last.
+   It has to lay out with any part missing — the first lesson has no previous,
+   the last no next, a lesson closed by a test no button. */
+.actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.neighbours {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
   gap: var(--space-5);
+  min-width: 0;
+}
+
+.next {
+  margin-left: auto;
 }
 
 .notice,

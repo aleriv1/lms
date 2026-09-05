@@ -44,7 +44,10 @@ test("a lesson survives a failed offline completion without losing its material"
     await expect(page).not.toHaveURL("/forbidden");
     await context.setOffline(false);
     await page
-      .getByRole("link", { name: "Вернуться к курсу", exact: true })
+      .getByRole("link", {
+        name: "Вернуться к курсу: Правила технической эксплуатации",
+        exact: true,
+      })
       .click();
     await expect(page).toHaveURL(courseUrl);
     await page.getByRole("link", { name: lessonTitle, exact: true }).click();

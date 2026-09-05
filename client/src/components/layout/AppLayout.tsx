@@ -3,24 +3,47 @@ import {
   NavLink,
   Outlet,
   useLocation,
+  useMatch,
   useNavigate,
 } from "react-router-dom";
 
 import { logout } from "../../features/auth/authSlice";
+import { CourseNav } from "../../features/learning/CourseNav";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { Button, Loader } from "../ui";
 import styles from "./AppLayout.module.css";
 import { getNavItems, isNavItemActive, ROLE_LABELS } from "./navItems";
 
 const NAVIGATION_ID = "app-navigation";
+const LESSON_PATH = "/learning/courses/:courseId/lessons/:lessonId";
+/**
+ * The two rails remember their own state. Collapsing the menu on the catalogue
+ * to gain width must not hide the course index a learner just gained, and a
+ * focus-mode collapse while reading must not follow them onto the admin screens.
+ */
 const SIDEBAR_STORAGE_KEY = "lms.sidebar";
+const COURSE_SIDEBAR_STORAGE_KEY = "lms.sidebar.course";
 
-function readSidebarHidden() {
+function readHidden(key: string) {
   try {
-    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "hidden";
+    return window.localStorage.getItem(key) === "hidden";
   } catch {
     return false;
   }
+}
+
+function useHiddenFlag(key: string) {
+  const [isHidden, setIsHidden] = useState(() => readHidden(key));
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, isHidden ? "hidden" : "shown");
+    } catch {
+      // Private mode: the preference is simply not remembered.
+    }
+  }, [key, isHidden]);
+
+  return [isHidden, setIsHidden] as const;
 }
 
 export function AppLayout({ children }: { children?: ReactNode }) {
@@ -30,14 +53,19 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const user = useAppSelector((state) => state.auth.user);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSidebarHidden, setIsSidebarHidden] = useState(readSidebarHidden);
+  const lessonMatch = useMatch(LESSON_PATH);
+  const [isMenuHidden, setMenuHidden] = useHiddenFlag(SIDEBAR_STORAGE_KEY);
+  const [isCourseNavHidden, setCourseNavHidden] = useHiddenFlag(
+    COURSE_SIDEBAR_STORAGE_KEY,
+  );
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      SIDEBAR_STORAGE_KEY,
-      isSidebarHidden ? "hidden" : "shown",
-    );
-  }, [isSidebarHidden]);
+  // On a lesson the rail carries the course instead of the global menu: one
+  // rail on screen, never two, and the lesson gets the page.
+  const isCourseMode = lessonMatch !== null;
+  const isSidebarHidden = isCourseMode ? isCourseNavHidden : isMenuHidden;
+  const setSidebarHidden = isCourseMode ? setCourseNavHidden : setMenuHidden;
+  const hideLabel = isCourseMode ? "Скрыть оглавление курса" : "Скрыть меню";
+  const showLabel = isCourseMode ? "Показать оглавление курса" : "Показать меню";
 
   if (!user) {
     return <Loader />;
@@ -60,7 +88,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           variant="ghost"
           aria-controls={NAVIGATION_ID}
           aria-expanded={isMenuOpen}
-          aria-label={isMenuOpen ? "Скрыть меню" : "Показать меню"}
+          aria-label={isMenuOpen ? hideLabel : showLabel}
           onClick={() => setIsMenuOpen((value) => !value)}
         >
           <MenuIcon isOpen={isMenuOpen} />
@@ -71,9 +99,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           isSidebarHidden ? styles.visible : ""
         }`}
         variant="secondary"
-        aria-label="Показать меню"
-        title="Показать меню"
-        onClick={() => setIsSidebarHidden(false)}
+        aria-label={showLabel}
+        title={showLabel}
+        onClick={() => setSidebarHidden(false)}
       >
         <SidebarIcon isHidden />
       </Button>
@@ -88,38 +116,51 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             <Button
               className={styles.sidebarHide}
               variant="ghost"
-              aria-label="Скрыть меню"
-              title="Скрыть меню"
-              onClick={() => setIsSidebarHidden(true)}
+              aria-label={hideLabel}
+              title={hideLabel}
+              onClick={() => setSidebarHidden(true)}
             >
               <SidebarIcon isHidden={false} />
             </Button>
           </div>
-          <p className={styles.userName}>{user.name}</p>
-          <p className={styles.role}>{ROLE_LABELS[user.role]}</p>
+          {!isCourseMode && (
+            <>
+              <p className={styles.userName}>{user.name}</p>
+              <p className={styles.role}>{ROLE_LABELS[user.role]}</p>
+            </>
+          )}
         </div>
-        <nav
-          className={styles.navigation}
-          id={NAVIGATION_ID}
-          aria-label="Основная навигация"
-        >
-          {getNavItems(user).map((item) => (
-            <NavLink
-              className={() =>
-                `${styles.navLink} ${
-                  isNavItemActive(item, location.pathname, location.search)
-                    ? styles.active
-                    : ""
-                }`
-              }
-              key={item.to}
-              to={item.to}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        {isCourseMode ? (
+          <CourseNav
+            navId={NAVIGATION_ID}
+            courseId={lessonMatch.params.courseId ?? ""}
+            currentLessonId={lessonMatch.params.lessonId ?? ""}
+            onNavigate={() => setIsMenuOpen(false)}
+          />
+        ) : (
+          <nav
+            className={styles.navigation}
+            id={NAVIGATION_ID}
+            aria-label="Основная навигация"
+          >
+            {getNavItems(user).map((item) => (
+              <NavLink
+                className={() =>
+                  `${styles.navLink} ${
+                    isNavItemActive(item, location.pathname, location.search)
+                      ? styles.active
+                      : ""
+                  }`
+                }
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <Button
           className={styles.logout}
           variant="ghost"
