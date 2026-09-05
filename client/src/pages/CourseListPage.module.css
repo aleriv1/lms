@@ -27,6 +27,8 @@
 }
 
 .filters {
+  --control-height: var(--control-height-compact);
+
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
@@ -58,7 +60,7 @@
   flex: 1;
 }
 
-.orderButton {
+.orderButton.orderButton {
   flex: 0 0 auto;
   width: var(--control-height);
   padding: var(--space-0);

@@ -25,9 +25,9 @@
   gap: var(--space-3);
 }
 
-.menuToggle,
-.sidebarHide,
-.sidebarShow {
+.menuToggle.menuToggle,
+.sidebarHide.sidebarHide,
+.sidebarShow.sidebarShow {
   display: inline-flex;
   width: var(--control-height);
   height: var(--control-height);
@@ -38,7 +38,7 @@
   color: var(--color-text);
 }
 
-.menuToggle {
+.menuToggle.menuToggle {
   border: 0.0625rem solid var(--color-border);
 }
 
@@ -102,6 +102,14 @@
 }
 
 @media (min-width: 64rem) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+
   .withoutSidebar .sidebarShow.visible {
     display: inline-flex;
   }
