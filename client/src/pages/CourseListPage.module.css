@@ -30,9 +30,9 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
   margin-bottom: var(--space-5);
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4);
   background: var(--color-surface);
   border: 0.0625rem solid var(--color-border);
   border-radius: var(--radius-medium);
@@ -86,7 +86,7 @@
   border-radius: var(--radius-medium);
 }
 
-@media (max-width: 64rem) {
+@media (max-width: 72rem) {
   .rowActions a,
   .rowActions button {
     width: var(--control-height);
@@ -121,12 +121,14 @@
   }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 30rem) {
   .heading {
     align-items: flex-start;
     flex-direction: column;
   }
+}
 
+@media (max-width: 48rem) {
   .filtersToggle.filtersToggle {
     display: inline-flex;
   }
