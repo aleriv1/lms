@@ -21,3 +21,7 @@ export const ASSIGNMENT_STATUS_LABELS: Record<
 export function formatDateTime(value: string): string {
   return new Date(value).toLocaleString("ru-RU");
 }
+
+export function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString("ru-RU");
+}

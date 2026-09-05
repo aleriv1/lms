@@ -4,10 +4,17 @@
   min-width: 0;
 }
 
-.figures,
-.courses {
+.figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-5);
+}
+
+/* Courses are wide rows, not a card grid: `auto-fit` collapses the empty tracks
+   and hands a learner with one assignment a single full-width track, which the
+   cover then fills at 16/9. */
+.courses {
+  display: grid;
   gap: var(--space-5);
 }
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { ProgressBar } from "../../components/ui";
 import { COURSE_STATUS_LABELS } from "../courses/courseLabels";
-import { ASSIGNMENT_STATUS_LABELS, formatDateTime } from "../users/userFormat";
+import { ASSIGNMENT_STATUS_LABELS, formatDate } from "../users/userFormat";
 import styles from "./CourseCard.module.css";
 
 export type CourseCardProps = { card: LearningCourseCard };
@@ -20,17 +20,26 @@ export function CourseCard({ card }: CourseCardProps) {
         <h3>{card.title}</h3>
         <p>{card.shortDescription}</p>
         <ProgressBar value={card.progressPercent} label="Прогресс курса" />
-        <p>
+        <p className={styles.meta}>
           {card.completedLessonsCount} из {card.requiredLessonsCount} уроков
+          {card.lastActivityAt !== null &&
+            ` · последняя активность ${formatDate(card.lastActivityAt)}`}
         </p>
-        <p>Курс: {COURSE_STATUS_LABELS[card.courseStatus]}</p>
-        <p>Назначение: {ASSIGNMENT_STATUS_LABELS[card.assignmentStatus]}</p>
-        <p>
-          Последняя активность:{" "}
-          {card.lastActivityAt === null
-            ? "—"
-            : formatDateTime(card.lastActivityAt)}
-        </p>
+        {(card.courseStatus === "archived" ||
+          card.assignmentStatus !== "active") && (
+          <p className={styles.flags}>
+            {card.courseStatus === "archived" && (
+              <span className={styles.flag}>
+                {COURSE_STATUS_LABELS[card.courseStatus]}
+              </span>
+            )}
+            {card.assignmentStatus !== "active" && (
+              <span className={styles.flag}>
+                {ASSIGNMENT_STATUS_LABELS[card.assignmentStatus]}
+              </span>
+            )}
+          </p>
+        )}
         <Link
           className={styles.control}
           to={`/learning/courses/${card.courseId}`}

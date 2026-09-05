@@ -1,4 +1,8 @@
+/* The cover sits in a column measured in rem, so it can never again be sized by
+   the width of the page. */
 .card {
+  display: grid;
+  grid-template-columns: 18rem minmax(0, 1fr);
   min-width: 0;
   overflow: hidden;
   background: var(--color-surface);
@@ -10,7 +14,8 @@
 .placeholder {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
+  min-height: 13.5rem;
   object-fit: cover;
   background: var(--color-surface-subtle);
 }
@@ -23,6 +28,7 @@
 
 .body {
   display: grid;
+  align-content: start;
   gap: var(--space-3);
   padding: var(--space-5);
   overflow-wrap: anywhere;
@@ -32,8 +38,41 @@
   margin: var(--space-0);
 }
 
+.meta {
+  color: var(--color-text-muted);
+}
+
+/* Published and active are the normal case and say nothing; only a course in
+   the archive or an assignment that is no longer active earns a line. */
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.flag {
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-round);
+}
+
 .control {
   composes: button primary from "../../components/ui/Button/Button.module.css";
   justify-self: start;
   text-decoration: none;
+}
+
+@media (max-width: 48rem) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cover,
+  .placeholder {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
 }
