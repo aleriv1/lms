@@ -1,7 +1,24 @@
 .toolbar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--space-4);
+}
+
+.toolbar a {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.toolbar a:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-primary);
 }
 
 .error {
@@ -19,4 +36,10 @@
 
 .error ul {
   margin-bottom: var(--space-0);
+}
+
+@media (max-width: 30rem) {
+  .toolbar {
+    justify-content: flex-start;
+  }
 }

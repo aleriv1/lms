@@ -3,6 +3,7 @@
   margin-bottom: var(--space-5);
   color: var(--color-primary);
   font-weight: var(--font-weight-medium);
+  text-decoration: none;
 }
 
 .heading,
@@ -13,13 +14,59 @@
 }
 
 .heading {
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: var(--space-4) var(--space-5);
   margin-bottom: var(--space-5);
+}
+
+.heading h1 {
+  margin-bottom: var(--space-2);
+  line-height: 1.25;
+}
+
+.heading p {
+  font-size: var(--font-size-small);
 }
 
 .actions {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.actions:has(> button:nth-child(3))>button:nth-child(3) {
+  color: var(--color-danger);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.actions:has(> button:nth-child(3))>button:nth-child(3):hover:not(:disabled) {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-danger);
+}
+
+.heading~form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.heading~form>* {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.heading~form textarea[name="shortDescription"] {
+  height: 6rem;
+  min-height: 5rem;
+}
+
+.heading~form textarea[name="description"] {
+  height: 10rem;
+  min-height: 8rem;
+}
+
+.heading~form>button[type="submit"] {
+  justify-self: start;
+  margin-top: var(--space-2);
 }
 
 .success,
@@ -50,7 +97,79 @@
 
 .lessonSection,
 .testSection {
-  margin-top: var(--space-7);
+  margin-top: var(--space-6);
+}
+
+.lessonSection>section,
+.testSection>section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.lessonSection>section>*,
+.testSection>section>* {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.lessonSection>section>h2,
+.testSection>section>h2 {
+  grid-column: 1;
+  margin: var(--space-0);
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.lessonSection>section>div:has(> a:only-child),
+.testSection>section>div:has(> a:only-child) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.lessonSection>section>section,
+.testSection>section>section {
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  text-align: left;
+}
+
+.lessonSection>section>section>h2,
+.testSection>section>section>h2 {
+  font-size: var(--font-size-body);
+}
+
+.lessonSection>section>section a,
+.testSection>section>section a {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.lessonSection>section>section a:hover,
+.testSection>section>section a:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-primary);
+}
+
+@media (min-width: 48rem) {
+  .heading~form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-5);
+  }
+
+  .heading~form>div:has([name="category"]),
+  .heading~form>div:has([name="audience"]) {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 48rem) {
@@ -61,5 +180,32 @@
 
   .actions {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 30rem) {
+  .heading~form {
+    padding: var(--space-4);
+  }
+
+  .heading~form>button[type="submit"] {
+    justify-self: stretch;
+  }
+
+  .lessonSection>section,
+  .testSection>section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .lessonSection>section>div:has(> a:only-child),
+  .testSection>section>div:has(> a:only-child) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .lessonSection>section>section,
+  .testSection>section>section {
+    padding: var(--space-4);
   }
 }
