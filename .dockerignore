@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+.idea
+.vscode
+.claude
+.codex
+materials-for-thoughts
+test-results
+playwright-report
+e2e
+*.log
+**/.env
