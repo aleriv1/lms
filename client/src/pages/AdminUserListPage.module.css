@@ -2,16 +2,52 @@
   margin-bottom: var(--space-5);
 }
 
+/* Тот же ритм, что и в каталоге курсов: компактные контролы, поиск на всю
+   строку и панель фильтров одной карточкой. */
 .filters {
+  --control-height: var(--control-height-compact);
+
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
   margin-bottom: var(--space-5);
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4);
   background: var(--color-surface);
   border: 0.0625rem solid var(--color-border);
   border-radius: var(--radius-medium);
+}
+
+.filtersToggle.filtersToggle {
+  display: none;
+  width: 100%;
+  margin-bottom: var(--space-3);
+}
+
+.searchField {
+  grid-column: 1 / -1;
+}
+
+.sortField {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.sortField > *:first-child {
+  flex: 1;
+}
+
+.orderButton.orderButton {
+  flex: 0 0 auto;
+  width: var(--control-height);
+  padding: var(--space-0);
+}
+
+/* Ссылка карточки — одной строкой: перенос «Открыть / карточку» ломал ритм
+   строк таблицы. */
+.rowAction {
+  white-space: nowrap;
 }
 
 @media (max-width: 64rem) {
@@ -21,7 +57,16 @@
 }
 
 @media (max-width: 48rem) {
+  .filtersToggle.filtersToggle {
+    display: inline-flex;
+  }
+
   .filters {
+    display: none;
     grid-template-columns: 1fr;
+  }
+
+  .filtersOpen {
+    display: grid;
   }
 }

@@ -1,7 +1,7 @@
 import type { PublicUser, UserRole } from "@lms/shared";
 import { describe, expect, it } from "vitest";
 
-import { getNavItems } from "./navItems";
+import { findActiveNavItem, getNavItems } from "./navItems";
 
 function user(role: UserRole): PublicUser {
   return {
@@ -40,5 +40,41 @@ describe("getNavItems", () => {
       "/learning",
       "/profile",
     ]);
+  });
+});
+
+describe("findActiveNavItem", () => {
+  const adminItems = getNavItems(user("admin"));
+
+  function activeLabel(pathname: string, search = "") {
+    return findActiveNavItem(adminItems, pathname, search)?.label ?? null;
+  }
+
+  it("lights «Пользователи» alone on the user list", () => {
+    expect(activeLabel("/admin/users")).toBe("Пользователи");
+  });
+
+  it("keeps «Пользователи» lit on a user card", () => {
+    expect(activeLabel("/admin/users/64b7f2c1d3e4a5b6c7d8e9f0")).toBe(
+      "Пользователи",
+    );
+  });
+
+  it("leaves «Главная» lit on the admin sections without an item", () => {
+    expect(activeLabel("/admin")).toBe("Главная");
+    expect(activeLabel("/admin/statistics")).toBe("Главная");
+  });
+
+  it("separates the catalogue from a teacher's own courses", () => {
+    const teacher = user("teacher");
+    const items = getNavItems(teacher);
+
+    expect(findActiveNavItem(items, "/manage/courses", "")?.label).toBe(
+      "Каталог курсов",
+    );
+    expect(
+      findActiveNavItem(items, "/manage/courses", `?authorId=${teacher.id}`)
+        ?.label,
+    ).toBe("Мои курсы");
   });
 });
