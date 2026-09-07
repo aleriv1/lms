@@ -5,12 +5,6 @@ import styles from "./Table.module.css";
 export type TableColumn<TRow> = {
   key: string;
   header: string;
-  /**
-   * Класс для ячеек колонки. Нужен там, где содержимое — одно длинное «слово»
-   * (почта, идентификатор): без переноса внутри слова колонка требует всю свою
-   * ширину, и таблица уезжает в горизонтальный скролл.
-   */
-  className?: string;
   render: (row: TRow) => ReactNode;
 };
 
@@ -44,11 +38,7 @@ export function Table<TRow>({
           {rows.map((row) => (
             <tr key={getRowKey(row)}>
               {columns.map((column) => (
-                <td
-                  className={column.className}
-                  data-label={column.header}
-                  key={column.key}
-                >
+                <td data-label={column.header} key={column.key}>
                   {column.render(row)}
                 </td>
               ))}

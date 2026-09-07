@@ -50,12 +50,37 @@
   white-space: nowrap;
 }
 
-/* Почта — одно длинное «слово». Без переноса внутри слова колонка требует всю
-   свою ширину, таблица уходит в горизонтальный скролл, и padding последней
-   колонки оказывается за краем контейнера. */
-.emailCell {
-  min-width: 11rem;
+/* Имя и почта — один блок, как в списках других LMS: почта отдельной колонкой
+   требовала всю свою ширину (адрес — одно длинное «слово»), и таблица уходила
+   в горизонтальный скролл. */
+.identity {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.identityName {
   overflow-wrap: anywhere;
+}
+
+/* Длинный адрес обрезается многоточием, а не растягивает колонку. Полное
+   значение остаётся в title и в карточке пользователя. */
+.identityEmail {
+  max-width: 16rem;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* В карточках (ниже 72rem) ширина не в дефиците, и обрезать адрес незачем. */
+@media (max-width: 72rem) {
+  .identityEmail {
+    max-width: none;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
 }
 
 @media (max-width: 64rem) {
