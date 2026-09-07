@@ -50,6 +50,14 @@
   white-space: nowrap;
 }
 
+/* Почта — одно длинное «слово». Без переноса внутри слова колонка требует всю
+   свою ширину, таблица уходит в горизонтальный скролл, и padding последней
+   колонки оказывается за краем контейнера. */
+.emailCell {
+  min-width: 11rem;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 64rem) {
   .filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
