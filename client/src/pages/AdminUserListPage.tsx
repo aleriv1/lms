@@ -20,6 +20,7 @@ import {
   Loader,
   Pagination,
   Select,
+  SortOrderIcon,
   Table,
 } from "../components/ui";
 import type { TableColumn } from "../components/ui/Table/Table";
@@ -122,10 +123,14 @@ const columns: TableColumn<AdminUserListItem>[] = [
     key: "actions",
     header: "Действия",
     render: (user) => (
-      <Link to={`/admin/users/${user.id}`}>Открыть карточку</Link>
+      <Link className={styles.rowAction} to={`/admin/users/${user.id}`}>
+        Открыть карточку
+      </Link>
     ),
   },
 ];
+
+const FILTERS_ID = "user-filters";
 
 export function AdminUserListPage() {
   const dispatch = useAppDispatch();
@@ -135,6 +140,7 @@ export function AdminUserListPage() {
     () => readAdminUsersQuery(searchParams),
     [searchParams],
   );
+  const [areFiltersOpen, setAreFiltersOpen] = useState(false);
   const updateQuery = useCallback(
     (changes: Partial<AdminUsersQuery>, keepPage = false) => {
       setSearchParams((currentParams) => {
@@ -193,15 +199,30 @@ export function AdminUserListPage() {
         <h1>Пользователи</h1>
         <p>Управляйте учетными записями и назначениями курсов.</p>
       </div>
-      <div className={styles.filters}>
-        <DebouncedFilterInput
-          key={`search-${query.search ?? ""}`}
-          label="Поиск по имени или email"
-          type="search"
-          maxLength={SEARCH_MAX_LENGTH}
-          initialValue={query.search ?? ""}
-          onDebouncedChange={updateSearch}
-        />
+      <Button
+        className={styles.filtersToggle}
+        variant="secondary"
+        aria-controls={FILTERS_ID}
+        aria-expanded={areFiltersOpen}
+        onClick={() => setAreFiltersOpen((value) => !value)}
+      >
+        Фильтры
+      </Button>
+
+      <div
+        className={`${styles.filters} ${areFiltersOpen ? styles.filtersOpen : ""}`}
+        id={FILTERS_ID}
+      >
+        <div className={styles.searchField}>
+          <DebouncedFilterInput
+            key={`search-${query.search ?? ""}`}
+            label="Поиск по имени или email"
+            type="search"
+            maxLength={SEARCH_MAX_LENGTH}
+            initialValue={query.search ?? ""}
+            onDebouncedChange={updateSearch}
+          />
+        </div>
         <DebouncedFilterInput
           key={`group-${query.groupName ?? ""}`}
           label="Группа"
@@ -231,26 +252,33 @@ export function AdminUserListPage() {
             })
           }
         />
-        <Select
-          label="Сортировка"
-          options={sortOptions}
-          value={query.sortBy}
-          onChange={(event) =>
-            updateQuery({
-              sortBy: event.target.value as AdminUsersQuery["sortBy"],
-            })
-          }
-        />
-        <Button
-          variant="secondary"
-          onClick={() =>
-            updateQuery({
-              sortOrder: query.sortOrder === "asc" ? "desc" : "asc",
-            })
-          }
-        >
-          {query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"}
-        </Button>
+        <div className={styles.sortField}>
+          <Select
+            label="Сортировка"
+            options={sortOptions}
+            value={query.sortBy}
+            onChange={(event) =>
+              updateQuery({
+                sortBy: event.target.value as AdminUsersQuery["sortBy"],
+              })
+            }
+          />
+          <Button
+            className={styles.orderButton}
+            variant="secondary"
+            aria-label={
+              query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"
+            }
+            title={query.sortOrder === "asc" ? "По возрастанию" : "По убыванию"}
+            onClick={() =>
+              updateQuery({
+                sortOrder: query.sortOrder === "asc" ? "desc" : "asc",
+              })
+            }
+          >
+            <SortOrderIcon ascending={query.sortOrder === "asc"} />
+          </Button>
+        </div>
       </div>
       {(list.status === "idle" || list.status === "loading") && (
         <Loader label="Загрузка пользователей" />

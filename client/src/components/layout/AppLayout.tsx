@@ -12,7 +12,7 @@ import { CourseNav } from "../../features/learning/CourseNav";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { Button, Loader } from "../ui";
 import styles from "./AppLayout.module.css";
-import { getNavItems, isNavItemActive, ROLE_LABELS } from "./navItems";
+import { findActiveNavItem, getNavItems, ROLE_LABELS } from "./navItems";
 
 const NAVIGATION_ID = "app-navigation";
 const LESSON_PATH = "/learning/courses/:courseId/lessons/:lessonId";
@@ -97,6 +97,13 @@ export function AppLayout({ children }: { children?: ReactNode }) {
     return <Loader />;
   }
 
+  const navItems = getNavItems(user);
+  const activeNavItem = findActiveNavItem(
+    navItems,
+    location.pathname,
+    location.search,
+  );
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await dispatch(logout());
@@ -170,13 +177,11 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             id={NAVIGATION_ID}
             aria-label="Основная навигация"
           >
-            {getNavItems(user).map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 className={() =>
                   `${styles.navLink} ${
-                    isNavItemActive(item, location.pathname, location.search)
-                      ? styles.active
-                      : ""
+                    item === activeNavItem ? styles.active : ""
                   }`
                 }
                 key={item.to}

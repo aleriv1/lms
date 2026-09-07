@@ -53,7 +53,10 @@ export function AdminDashboardPage() {
 
   return (
     <section className={styles.page}>
-      <h1>Главная администратора</h1>
+      <div className={styles.heading}>
+        <h1>Главная администратора</h1>
+        <p>Сводка по курсам, пользователям и обучению.</p>
+      </div>
       <dl className={styles.cards}>
         <div>
           <dt>Активных курсов (опубликованных)</dt>
@@ -91,7 +94,7 @@ export function AdminDashboardPage() {
       </dl>
       <section>
         <h2>Быстрые действия</h2>
-        <nav className={styles.links} aria-label="Быстрые действия">
+        <nav className={styles.actionLinks} aria-label="Быстрые действия">
           <Link to="/manage/courses/new">Создать курс</Link>
           <Link to="/admin/users">Управление пользователями</Link>
           <Link to="/admin/statistics">Статистика</Link>

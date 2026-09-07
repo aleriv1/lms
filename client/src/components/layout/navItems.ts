@@ -51,6 +51,25 @@ export function getNavItems(user: PublicUser): NavItem[] {
   );
 }
 
+/**
+ * «Главная» (`/admin`) is a prefix of «Пользователи» (`/admin/users`), so a
+ * plain prefix test lit both rails at once. The longest matching item wins:
+ * `/admin/users/:id` still belongs to «Пользователи», `/admin/statistics` —
+ * which has no item of its own — still belongs to «Главная».
+ */
+export function findActiveNavItem(
+  items: NavItem[],
+  pathname: string,
+  search: string,
+): NavItem | null {
+  return items.reduce<NavItem | null>((active, item) => {
+    if (!isNavItemActive(item, pathname, search)) {
+      return active;
+    }
+    return active && active.to.length >= item.to.length ? active : item;
+  }, null);
+}
+
 /** «Каталог курсов» and «Мои курсы» share a path and differ only by query. */
 export function isNavItemActive(
   item: NavItem,

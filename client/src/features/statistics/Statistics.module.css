@@ -40,11 +40,38 @@
   font-weight: var(--font-weight-regular);
 }
 
+/* Шапка страницы того же строя, что и в каталоге: заголовок и строка о том,
+   что это за экран. */
+.heading h1 {
+  margin-bottom: var(--space-2);
+}
+
 .links,
+.actionLinks,
 .marks {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+/* Быстрые действия — набор «плиток». Без подчёркивания голая ссылка перестаёт
+   читаться как кнопка, а рядом с карточками статистики она и должна выглядеть
+   так же, как вторичная кнопка каталога. */
+.actionLinks a {
+  display: inline-flex;
+  min-height: var(--control-height-compact);
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-medium);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.actionLinks a:hover {
+  background: var(--color-surface-subtle);
 }
 
 .filters {
