@@ -98,11 +98,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   }
 
   const navItems = getNavItems(user);
-  const activeNavItem = findActiveNavItem(
-    navItems,
-    location.pathname,
-    location.search,
-  );
+  const activeNavItem = findActiveNavItem(navItems, location.pathname);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

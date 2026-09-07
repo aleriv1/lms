@@ -31,11 +31,10 @@ describe("getNavItems", () => {
     expect(paths).toEqual(["/learning", "/profile"]);
   });
 
-  it("adds the author filter for a teacher", () => {
+  it("gives a teacher one catalogue item, filtered by author", () => {
     const teacher = user("teacher");
 
     expect(getNavItems(teacher).map((item) => item.to)).toEqual([
-      "/manage/courses",
       `/manage/courses?authorId=${teacher.id}`,
       "/learning",
       "/profile",
@@ -46,8 +45,8 @@ describe("getNavItems", () => {
 describe("findActiveNavItem", () => {
   const adminItems = getNavItems(user("admin"));
 
-  function activeLabel(pathname: string, search = "") {
-    return findActiveNavItem(adminItems, pathname, search)?.label ?? null;
+  function activeLabel(pathname: string) {
+    return findActiveNavItem(adminItems, pathname)?.label ?? null;
   }
 
   it("lights «Пользователи» alone on the user list", () => {
@@ -65,16 +64,14 @@ describe("findActiveNavItem", () => {
     expect(activeLabel("/admin/statistics")).toBe("Главная");
   });
 
-  it("separates the catalogue from a teacher's own courses", () => {
-    const teacher = user("teacher");
-    const items = getNavItems(teacher);
+  it("keeps «Каталог курсов» lit whether or not the author filter is on", () => {
+    const items = getNavItems(user("teacher"));
 
-    expect(findActiveNavItem(items, "/manage/courses", "")?.label).toBe(
+    expect(findActiveNavItem(items, "/manage/courses")?.label).toBe(
       "Каталог курсов",
     );
-    expect(
-      findActiveNavItem(items, "/manage/courses", `?authorId=${teacher.id}`)
-        ?.label,
-    ).toBe("Мои курсы");
+    expect(findActiveNavItem(items, "/manage/courses/new")?.label).toBe(
+      "Каталог курсов",
+    );
   });
 });

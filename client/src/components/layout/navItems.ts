@@ -34,6 +34,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Администратор",
 };
 
+/**
+ * A teacher's daily list is their own courses, so their one catalogue item
+ * carries the author filter. It was a second item before — the same page under
+ * two names — and the pair said nothing the checkbox inside the page does not.
+ * Clearing that checkbox drops the parameter and shows everyone's courses.
+ */
 export function getNavItems(user: PublicUser): NavItem[] {
   const items = NAV_ITEMS[user.role];
 
@@ -41,13 +47,10 @@ export function getNavItems(user: PublicUser): NavItem[] {
     return items;
   }
 
-  return items.flatMap((item) =>
+  return items.map((item) =>
     item.to === "/manage/courses"
-      ? [
-          item,
-          { to: `/manage/courses?authorId=${user.id}`, label: "Мои курсы" },
-        ]
-      : [item],
+      ? { ...item, to: `/manage/courses?authorId=${user.id}` }
+      : item,
   );
 }
 
@@ -60,33 +63,20 @@ export function getNavItems(user: PublicUser): NavItem[] {
 export function findActiveNavItem(
   items: NavItem[],
   pathname: string,
-  search: string,
 ): NavItem | null {
   return items.reduce<NavItem | null>((active, item) => {
-    if (!isNavItemActive(item, pathname, search)) {
+    if (!isNavItemActive(item, pathname)) {
       return active;
     }
     return active && active.to.length >= item.to.length ? active : item;
   }, null);
 }
 
-/** «Каталог курсов» and «Мои курсы» share a path and differ only by query. */
-export function isNavItemActive(
-  item: NavItem,
-  pathname: string,
-  search: string,
-): boolean {
-  const [itemPath, itemSearch = ""] = item.to.split("?");
-  const pathMatches =
-    pathname === itemPath || pathname.startsWith(`${itemPath}/`);
-
-  if (!pathMatches) {
-    return false;
-  }
-
-  const itemAuthorId = new URLSearchParams(itemSearch).get("authorId");
-  const locationAuthorId = new URLSearchParams(search).get("authorId");
-  return itemAuthorId
-    ? itemAuthorId === locationAuthorId
-    : locationAuthorId === null;
+/**
+ * The query string of an item is a starting filter, not part of its identity:
+ * «Каталог курсов» stays lit whether or not the author filter is on.
+ */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  const itemPath = item.to.split("?")[0] ?? item.to;
+  return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 }
