@@ -88,14 +88,20 @@ export function LearningCoursePage() {
         <p className={styles.notice}>
           Курс в архиве: доступен только для просмотра
         </p>
+      ) : course.nextLessonId !== null ? (
+        <Link
+          className={styles.control}
+          to={`/learning/courses/${course.id}/lessons/${course.nextLessonId}`}
+        >
+          Продолжить обучение
+        </Link>
       ) : (
-        course.nextLessonId !== null && (
-          <Link
-            className={styles.control}
-            to={`/learning/courses/${course.id}/lessons/${course.nextLessonId}`}
-          >
-            Продолжить обучение
-          </Link>
+        // Nothing left to open would otherwise leave the page silent about
+        // why: say the course is finished, and that it stays readable.
+        course.assignmentStatus === "completed" && (
+          <p className={styles.notice}>
+            Курс завершён: материалы остаются доступны для повторения
+          </p>
         )
       )}
       <LessonToc courseId={course.id} lessons={course.lessons} />

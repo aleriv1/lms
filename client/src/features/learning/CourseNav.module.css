@@ -11,6 +11,16 @@
 
 .exit {
   color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:visited {
+    color: var(--color-text-muted);
+  }
+
+  &:hover {
+    color: var(--color-link);
+    text-decoration: underline;
+  }
 }
 
 .courseTitle {

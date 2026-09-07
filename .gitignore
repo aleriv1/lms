@@ -9,3 +9,11 @@ coverage/
 Thumbs.db
 playwright-report/
 test-results/
+
+.idea/
+.vscode/
+.claude/
+.codex/
+materials-for-thoughts/
+
+.AGENTS.md

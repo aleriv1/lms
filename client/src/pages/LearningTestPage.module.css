@@ -36,8 +36,30 @@
   border-radius: var(--radius-medium);
 }
 
+/* Навигация опознаётся местом и группировкой, не линией: подчёркивание в
+   проекте остаётся признаком ссылки внутри текста и проявляется на hover. */
 .links {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
+}
+
+.links a {
+  text-decoration: none;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+/* Шапочная пара — контекст, а не цель перехода: приглушена так же, как
+   соседние уроки в LearningLessonPage. */
+.heading-links {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.heading-links:hover {
+  color: var(--color-link);
+  text-decoration: underline;
 }

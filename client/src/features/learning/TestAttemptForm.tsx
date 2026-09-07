@@ -10,7 +10,7 @@ import { Controller, useForm, useWatch, type FieldPath } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import { toFormError, type FormError } from "../../api/formError";
-import { Button, EmptyState, Modal, ProgressBar } from "../../components/ui";
+import { Button, EmptyState, Modal } from "../../components/ui";
 import { UnsavedChangesGuard } from "../../routes/UnsavedChangesGuard";
 import styles from "./TestAttemptForm.module.css";
 
@@ -71,8 +71,10 @@ export function TestAttemptForm({ test, onSubmit }: TestAttemptFormProps) {
   const answeredCount = answers.filter(
     (answer) => answer.optionIds.length > 0,
   ).length;
+  const questionCount = test.questions.length;
+  const blankCount = questionCount - answeredCount;
   const question: LearnerQuestion | undefined = test.questions[questionIndex];
-  const isLastQuestion = questionIndex === test.questions.length - 1;
+  const isLastQuestion = questionIndex === questionCount - 1;
 
   const submit = async (confirmed = false) => {
     // Lock before async validation too: a submit event bypasses disabled buttons.
@@ -121,13 +123,26 @@ export function TestAttemptForm({ test, onSubmit }: TestAttemptFormProps) {
       }}
     >
       <UnsavedChangesGuard when={answeredCount > 0 && !isSending} />
-      <p role="status">
-        Вопрос {questionIndex + 1} из {test.questions.length}
-      </p>
-      <ProgressBar
-        value={Math.round((answeredCount / test.questions.length) * 100)}
-        label="Доля вопросов с ответом"
-      />
+      <div className={styles.progress}>
+        <div className={styles.progressMeta}>
+          <span role="status">
+            Вопрос {questionIndex + 1} из {questionCount}
+          </span>
+          {questionCount > 1 && blankCount > 0 && (
+            <span>Осталось без ответа: {blankCount}</span>
+          )}
+        </div>
+        {questionCount > 1 && (
+          <div className={styles.track} aria-hidden="true">
+            <div
+              className={styles.trackFill}
+              style={{
+                width: `${Math.round(((questionIndex + 1) / questionCount) * 100)}%`,
+              }}
+            />
+          </div>
+        )}
+      </div>
       <Controller
         key={question.id}
         control={form.control}

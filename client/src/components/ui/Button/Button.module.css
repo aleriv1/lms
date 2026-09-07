@@ -40,6 +40,13 @@
   background: var(--color-danger-hover);
 }
 
+.primary-shy {
+  /* border: 1px solid var(--color-primary); */
+  /* color: var(--color-primary); */
+  color: var(--color-text-muted);
+  background: var(--color-transparent);
+}
+
 .ghost {
   color: var(--color-primary);
   background: var(--color-transparent);

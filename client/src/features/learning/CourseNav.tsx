@@ -11,6 +11,8 @@ export type CourseNavProps = {
   navId: string;
   courseId: string;
   currentLessonId: string;
+  /** False on a test: the lesson is where the learner is, but not what is open. */
+  isCurrentLessonOpen?: boolean;
   onNavigate: () => void;
 };
 
@@ -18,11 +20,13 @@ function LessonItem({
   courseId,
   lesson,
   isCurrent,
+  isOpen,
   onNavigate,
 }: {
   courseId: string;
   lesson: LearningLessonItem;
   isCurrent: boolean;
+  isOpen: boolean;
   onNavigate: () => void;
 }) {
   const body = (
@@ -40,10 +44,21 @@ function LessonItem({
   );
 
   if (isCurrent) {
-    return (
+    // On the lesson itself there is nowhere to go; from its test the same row
+    // is the way back into the material.
+    return isOpen ? (
       <span className={`${styles.item} ${styles.current}`} aria-current="step">
         {body}
       </span>
+    ) : (
+      <Link
+        className={`${styles.item} ${styles.current}`}
+        aria-current="step"
+        to={`/learning/courses/${courseId}/lessons/${lesson.id}`}
+        onClick={onNavigate}
+      >
+        {body}
+      </Link>
     );
   }
 
@@ -65,8 +80,8 @@ function LessonItem({
 }
 
 /**
- * The course rail that replaces the global menu while a lesson is open. The
- * lesson page owns the request for the course, so this only reads what the page
+ * The course rail that replaces the global menu while a lesson or its test is
+ * open. The page owns the request for the course, so this only reads what it
  * left in the store — two fetchers would double every request and race the
  * page's own abort handling.
  */
@@ -74,6 +89,7 @@ export function CourseNav({
   navId,
   courseId,
   currentLessonId,
+  isCurrentLessonOpen = true,
   onNavigate,
 }: CourseNavProps) {
   const { status, data } = useAppSelector((state) => state.learning.course);
@@ -92,13 +108,16 @@ export function CourseNav({
 
   return (
     <div className={styles.rail}>
-      <Link
-        className={styles.exit}
-        to={`/learning/courses/${courseId}`}
-        onClick={onNavigate}
-      >
-        ← К курсу
-      </Link>
+      {/* On a test the course arrives with the test: no id yet, no dead link. */}
+      {courseId !== "" && (
+        <Link
+          className={styles.exit}
+          to={`/learning/courses/${courseId}`}
+          onClick={onNavigate}
+        >
+          ← К курсу
+        </Link>
+      )}
       {course && (
         <>
           <p className={styles.courseTitle}>{course.title}</p>
@@ -122,6 +141,7 @@ export function CourseNav({
                     courseId={courseId}
                     lesson={lesson}
                     isCurrent={isCurrent}
+                    isOpen={isCurrentLessonOpen}
                     onNavigate={onNavigate}
                   />
                 </li>

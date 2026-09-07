@@ -16,6 +16,7 @@ import { getNavItems, isNavItemActive, ROLE_LABELS } from "./navItems";
 
 const NAVIGATION_ID = "app-navigation";
 const LESSON_PATH = "/learning/courses/:courseId/lessons/:lessonId";
+const TEST_PATH = "/learning/tests/:testId";
 /**
  * The two rails remember their own state. Collapsing the menu on the catalogue
  * to gain width must not hide the course index a learner just gained, and a
@@ -54,14 +55,39 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const lessonMatch = useMatch(LESSON_PATH);
+  const testMatch = useMatch(TEST_PATH);
+  const testState = useAppSelector((state) => state.learning.test);
   const [isMenuHidden, setMenuHidden] = useHiddenFlag(SIDEBAR_STORAGE_KEY);
   const [isCourseNavHidden, setCourseNavHidden] = useHiddenFlag(
     COURSE_SIDEBAR_STORAGE_KEY,
   );
 
   // On a lesson the rail carries the course instead of the global menu: one
-  // rail on screen, never two, and the lesson gets the page.
-  const isCourseMode = lessonMatch !== null;
+  // rail on screen, never two, and the lesson gets the page. A test belongs to
+  // the same course, so it keeps the rail. Its route carries only the test id,
+  // so which course that is arrives with the test the page loads — the rail
+  // waits there rather than flashing the global menu in the meantime, and
+  // steps aside for a test that fails to load, when the menu is the only way
+  // out left.
+  const testId = testMatch?.params.testId;
+  const railTest =
+    testId && testState.data?.id.toLowerCase() === testId.toLowerCase()
+      ? testState.data
+      : null;
+  const courseRail = lessonMatch
+    ? {
+        courseId: lessonMatch.params.courseId ?? "",
+        lessonId: lessonMatch.params.lessonId ?? "",
+        isLessonOpen: true,
+      }
+    : testMatch && testState.status !== "error"
+      ? {
+          courseId: railTest?.courseId ?? "",
+          lessonId: railTest?.lessonId ?? "",
+          isLessonOpen: false,
+        }
+      : null;
+  const isCourseMode = courseRail !== null;
   const isSidebarHidden = isCourseMode ? isCourseNavHidden : isMenuHidden;
   const setSidebarHidden = isCourseMode ? setCourseNavHidden : setMenuHidden;
   const hideLabel = isCourseMode ? "Скрыть оглавление курса" : "Скрыть меню";
@@ -130,11 +156,12 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             </>
           )}
         </div>
-        {isCourseMode ? (
+        {courseRail ? (
           <CourseNav
             navId={NAVIGATION_ID}
-            courseId={lessonMatch.params.courseId ?? ""}
-            currentLessonId={lessonMatch.params.lessonId ?? ""}
+            courseId={courseRail.courseId}
+            currentLessonId={courseRail.lessonId}
+            isCurrentLessonOpen={courseRail.isLessonOpen}
             onNavigate={() => setIsMenuOpen(false)}
           />
         ) : (

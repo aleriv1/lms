@@ -5,7 +5,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { toFormError, type FormError } from "../api/formError";
 import { Button, EmptyState, ErrorState, Loader } from "../components/ui";
@@ -64,6 +64,7 @@ function LearningLessonScreen({
   startedLessons: RefObject<Set<string>>;
 }) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const courseState = useAppSelector((state) => state.learning.course);
   const lessonState = useAppSelector((state) => state.learning.lesson);
   const [actionError, setActionError] = useState<FormError | null>(null);
@@ -206,12 +207,44 @@ function LearningLessonScreen({
     if (!active.current) return;
     if (completeLesson.rejected.match(result)) {
       setActionError(result.payload ?? toFormError(result.error));
-    } else {
-      setCourseCompleted(result.payload.courseCompleted);
-      await Promise.all([reloadLesson(), reloadCourse()]);
+      setIsActionLoading(false);
+      return;
     }
-    if (active.current) setIsActionLoading(false);
+
+    setCourseCompleted(result.payload.courseCompleted);
+    const [refreshed] = await Promise.all([reloadLesson(), reloadCourse()]);
+    if (!active.current) return;
+
+    // Completing is what unlocks the lesson after it, so the neighbour only
+    // exists in the refreshed answer — `lesson.nextLessonId` was still null
+    // when the button was pressed. Moving on is the point of the press.
+    //
+    // A finished course is the exception: the notice below confirms something
+    // the learner spent the whole course earning, and carrying them off the
+    // page would be the one time they never see it.
+    if (
+      !result.payload.courseCompleted &&
+      fetchLearningLesson.fulfilled.match(refreshed) &&
+      refreshed.payload.nextLessonId !== null
+    ) {
+      navigate(
+        `/learning/courses/${courseId}/lessons/${refreshed.payload.nextLessonId}`,
+      );
+      return;
+    }
+
+    setIsActionLoading(false);
   };
+
+  const isCompleted = lesson.progressStatus === "completed";
+  const canComplete =
+    !isCompleted && !lesson.requiredTest && course.courseStatus !== "archived";
+  // Whether the press can lead anywhere is known before it happens: the lesson
+  // after this one exists in the rail even while it is locked. The label may
+  // not promise a move the last lesson of a course cannot make.
+  const hasFollowingLesson = course.lessons.some(
+    (item) => item.order > lesson.order,
+  );
 
   return (
     <section className={styles.page}>
@@ -289,6 +322,7 @@ function LearningLessonScreen({
         <nav className={styles.neighbours} aria-label="Навигация по урокам">
           {lesson.previousLessonId !== null && (
             <Link
+              className={styles.neighbour}
               to={`/learning/courses/${course.id}/lessons/${lesson.previousLessonId}`}
             >
               ← Предыдущий урок
@@ -296,19 +330,23 @@ function LearningLessonScreen({
           )}
           {lesson.nextLessonId !== null && (
             <Link
-              className={styles.next}
+              className={
+                canComplete
+                  ? `${styles.neighbour} ${styles.next}`
+                  : styles.forward
+              }
               to={`/learning/courses/${course.id}/lessons/${lesson.nextLessonId}`}
             >
               Следующий урок →
             </Link>
           )}
         </nav>
-        {!lesson.requiredTest && course.courseStatus !== "archived" && (
+        {canComplete && (
           <Button
             isLoading={isActionLoading}
             onClick={() => void handleComplete()}
           >
-            Завершить урок
+            {hasFollowingLesson ? "Завершить и продолжить →" : "Завершить урок"}
           </Button>
         )}
       </div>

@@ -8,6 +8,23 @@ import styles from "./CourseCard.module.css";
 
 export type CourseCardProps = { card: LearningCourseCard };
 
+/**
+ * What the card's one control offers. A finished assignment keeps its access
+ * (specification 7.4), so the course stays open for re-reading — but not as
+ * "Продолжить", which promises unfinished material. Completion is one way and
+ * the learner never resets it: a repeat run comes from a new assignment.
+ * A lesson published after the finish lowers the percentage and does leave
+ * something to study, and then the invitation is to continue after all.
+ */
+function controlLabel(card: LearningCourseCard): string {
+  if (card.courseStatus === "archived") return "Открыть";
+  if (card.assignmentStatus === "completed" && card.progressPercent === 100) {
+    return "Просмотреть материалы";
+  }
+  if (card.lastActivityAt === null) return "Начать";
+  return "Продолжить";
+}
+
 export function CourseCard({ card }: CourseCardProps) {
   return (
     <article className={styles.card}>
@@ -44,11 +61,7 @@ export function CourseCard({ card }: CourseCardProps) {
           className={styles.control}
           to={`/learning/courses/${card.courseId}`}
         >
-          {card.courseStatus === "archived"
-            ? "Открыть"
-            : card.lastActivityAt === null
-              ? "Начать"
-              : "Продолжить"}
+          {controlLabel(card)}
         </Link>
       </div>
     </article>

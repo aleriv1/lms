@@ -57,6 +57,7 @@ describe("TestAttemptForm", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Далее" }));
     expect(screen.getByText("Вопрос 2 из 2")).toBeInTheDocument();
+    expect(screen.getByText("Осталось без ответа: 1")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Журнал осмотров" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Инструкция" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Расписание" }));
@@ -76,7 +77,7 @@ describe("TestAttemptForm", () => {
     expect(
       screen.getByRole("checkbox", { name: "Расписание" }),
     ).not.toBeChecked();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("value", "100");
+    expect(screen.queryByText(/Осталось без ответа/)).not.toBeInTheDocument();
 
     const submit = screen.getByRole("button", { name: "Отправить ответы" });
     await waitFor(() => expect(submit).toBeEnabled());

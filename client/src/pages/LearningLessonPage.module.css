@@ -24,6 +24,7 @@
 .back,
 .meta {
   color: var(--color-text-muted);
+  text-decoration: none;
 }
 
 .material {
@@ -85,7 +86,12 @@
 /* The complete button and the neighbouring lessons are one decision, so they
    are one row: neighbours at the edges they point to, the primary action last.
    It has to lay out with any part missing — the first lesson has no previous,
-   the last no next, a lesson closed by a test no button. */
+   the last no next, a lesson closed by a test or already finished no button.
+
+   One rule holds the row together: exactly one control is loud, and it is
+   whichever one moves the learner forward. Everything else is muted, the same
+   grey as the back link in the heading. On a finished lesson that loud control
+   is «Следующий урок», not a button repeating what is already done. */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -97,12 +103,33 @@
   display: flex;
   flex: 1 1 auto;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-5);
   min-width: 0;
 }
 
+.neighbour {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.neighbour:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
 .next {
   margin-left: auto;
+}
+
+/* When there is nothing left to complete, the forward link carries the weight
+   the button had. Same control, same place in the row — only the label and the
+   element change. */
+.forward {
+  /* composes: button primary from "../components/ui/Button/Button.module.css"; */
+  composes: button primary-shy from "../components/ui/Button/Button.module.css";
+  margin-left: auto;
+  text-decoration: none;
 }
 
 .notice,

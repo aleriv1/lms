@@ -33,7 +33,7 @@ function LearningTestScreen({ testId }: { testId: string }) {
   const courseId = testState.status === "ready" ? test?.courseId : undefined;
   const course =
     courseState.status === "ready" &&
-    courseState.data?.id.toLowerCase() === courseId?.toLowerCase()
+      courseState.data?.id.toLowerCase() === courseId?.toLowerCase()
       ? courseState.data
       : null;
 
@@ -156,10 +156,10 @@ function LearningTestScreen({ testId }: { testId: string }) {
       <header className={styles.heading}>
         <h1>{test.title}</h1>
         {course && (
-          <Link to={`/learning/courses/${course.id}`}>{course.title}</Link>
+          <Link className={styles["heading-links"]} to={`/learning/courses/${course.id}`}>{course.title}</Link>
         )}
         {lesson && (
-          <Link to={`/learning/courses/${test.courseId}/lessons/${lesson.id}`}>
+          <Link className={styles["heading-links"]} to={`/learning/courses/${test.courseId}/lessons/${lesson.id}`}>
             {lesson.title}
           </Link>
         )}

@@ -20,7 +20,8 @@
 .sidebarHead {
   display: flex;
   /* align-items: flex-start; */
-  align-items: center;
+  /* align-items: center; */
+  align-items: top;
   justify-content: space-between;
   gap: var(--space-3);
 }
@@ -33,9 +34,15 @@
   height: var(--control-height);
   min-height: var(--control-height);
   align-items: center;
+  /* align-items: top; */
   justify-content: center;
   padding: var(--space-0);
   color: var(--color-text);
+}
+
+.sidebarHide {
+  /* margin: var(--space-0) var(--space-0); */
+  margin-top: -0.8rem;
 }
 
 .menuToggle.menuToggle {
