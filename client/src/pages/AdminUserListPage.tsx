@@ -95,12 +95,17 @@ function DebouncedFilterInput({
 }
 
 const columns: TableColumn<AdminUserListItem>[] = [
-  { key: "name", header: "Имя", render: (user) => user.name },
   {
-    key: "email",
-    header: "Email",
-    className: styles.emailCell,
-    render: (user) => user.email,
+    key: "name",
+    header: "Пользователь",
+    render: (user) => (
+      <div className={styles.identity}>
+        <span className={styles.identityName}>{user.name}</span>
+        <span className={styles.identityEmail} title={user.email}>
+          {user.email}
+        </span>
+      </div>
+    ),
   },
   { key: "role", header: "Роль", render: (user) => ROLE_LABELS[user.role] },
   {
